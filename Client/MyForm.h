@@ -113,6 +113,7 @@ namespace Client {
 			this->button3->TabIndex = 4;
 			this->button3->Text = L"new post";
 			this->button3->UseVisualStyleBackColor = true;
+			this->button3->Click += gcnew System::EventHandler(this, &MyForm::button3_Click);
 			// 
 			// button4
 			// 
@@ -162,5 +163,15 @@ namespace Client {
 
 		}
 #pragma endregion
-	};
+	private: System::Void button3_Click(System::Object^ sender, System::EventArgs^ e) {
+		OpenFileDialog^ openFileDialog1 = gcnew OpenFileDialog;
+		openFileDialog1->Filter = "Image files (*.bmp;*.jpg;*.png)|*.bmp;*.jpg;*.png|All files (*.*)|*.*";
+
+		if (openFileDialog1->ShowDialog() == System::Windows::Forms::DialogResult::OK)
+		{
+			Image^ newImage = Image::FromFile(openFileDialog1->FileName);
+			pictureBox1->Image = newImage;
+		}
+	}
+};
 }
