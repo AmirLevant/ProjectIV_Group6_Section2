@@ -46,66 +46,87 @@ int main()
     std::cout << "Waiting for client packet" << std::endl;
 
     char response[BUFFER_SIZE];
-   // Hard-coded username and password
+    // Hard-coded username and password
     string hardcodedUsername = "john";
     string hardcodedPassword = "password";
 
     // Login
-    cout << "Enter your username: ";
-    string username;
-    cin >> username;
-    cout << "Enter your password: ";
-    string password;
-    cin >> password;
+    bool isLoggedIn = false;
+    while (!isLoggedIn) {
+        cout << "Enter your username: ";
+        string username;
+        cin >> username;
+        cout << "Enter your password: ";
+        string password;
+        cin >> password;
 
-    if (username == hardcodedUsername && password == hardcodedPassword) {
-        // Valid credentials
-        string loginMsg = "LOGIN " + username + "\n";
-        send(ServerSocket, loginMsg.c_str(), loginMsg.size(), 0);
-        char response[BUFFER_SIZE];
-        recv(ServerSocket, response, BUFFER_SIZE, 0);
-        if (strcmp(response, "OK\n") != 0) {
-            cout << "Login failed. Exiting..." << endl;
-            closesocket(ServerSocket);
-            WSACleanup();
-            return 0;
+        if (username == hardcodedUsername && password == hardcodedPassword) {
+            // Valid credentials
+            string loginMsg = "LOGIN " + username + "\n";
+            send(ServerSocket, loginMsg.c_str(), loginMsg.size(), 0);
+            char response[BUFFER_SIZE];
+            recv(ServerSocket, response, BUFFER_SIZE, 0);
+            if (strcmp(response, "OK\n") != 0) {
+                cout << "Login failed. Please try again." << endl;
+            }
+            else {
+                isLoggedIn = true;
+                cout << "Logged in successfully." << endl;
+            }
+        }
+        else {
+            // Invalid credentials
+            cout << "Invalid username or password. Please try again." << endl;
         }
     }
-    else {
-        // Invalid credentials
-        cout << "Invalid username or password. Exiting..." << endl;
-        closesocket(ServerSocket);
-        WSACleanup();
-        return 0;
+
+    // Receive .jpeg with caption
+    while (true) {
+        char buffer[BUFFER_SIZE];
+        memset(buffer, 0, BUFFER_SIZE);
+        int bytesReceived = recv(ServerSocket, buffer, BUFFER_SIZE, 0);
+        if (bytesReceived > 0) {
+            std::cout << "Received: " << buffer << std::endl;
+
+            // Track time of received data
+            auto receivedTime = std::chrono::system_clock::now();
+            std::time_t receivedTimeT = std::chrono::system_clock::to_time_t(receivedTime);
+            std::string timeString = std::ctime(&receivedTimeT);
+            std::cout << "Data received on " << timeString << std::endl;
+
+            // Save data to file
+            std::ofstream outFile;
+            outFile.open("received_data.txt", std::ios::out | std::ios::app);
+            if (outFile.is_open()) {
+                outFile << timeString << " " << buffer << std::endl;
+                outFile.close();
+            }
+
+            // Send confirmation to client
+            const char* confirmation = "Data received";
+            send(ServerSocket, confirmation, strlen(confirmation), 0);
+        }
     }
 
-    cout << "Logged in successfully." << endl;
-    bool isLoggedIn = true; // Assuming that the user is already logged in
-    //TO DO: Receive .jpeg / caption
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
-    int bytesReceived = recv(ServerSocket, buffer, BUFFER_SIZE, 0);
-    if (bytesReceived > 0) {
-        std::cout << "Received: " << buffer << std::endl;
+    // Receive request to show all saved data
+    char request[BUFFER_SIZE];
+    recv(ServerSocket, request, BUFFER_SIZE, 0);
+    if (strcmp(request, "SHOW_DATA\n") == 0) {
+        // Open file and read all saved data
+        std::ifstream inFile;
+        inFile.open("received_data.txt", std::ios::in);
+        if (inFile.is_open()) {
+            std::string line;
+            while (std::getline(inFile, line)) {
+                send(ServerSocket, line.c_str(), line.size(), 0);
+                recv(ServerSocket, response, BUFFER_SIZE, 0);
+                if (strcmp(response, "OK\n") != 0) {
+                    cout << "Failed to send data. Continuing..." << endl;
+                }
+            }
+            inFile.close();
+        }
     }
-
-    // TO DO: Track time of received data so that user can refresh his/her memories
-    auto receivedTime = std::chrono::system_clock::now();
-    std::time_t receivedTimeT = std::chrono::system_clock::to_time_t(receivedTime);
-    std::string timeString = std::ctime(&receivedTimeT);
-    std::cout << "Data received on " << timeString << std::endl;
-
-    //TO DO: Save it to file
-    std::ofstream outFile;
-    outFile.open("received_data.txt", std::ios::out | std::ios::app);
-    if (outFile.is_open()) {
-        outFile << timeString << " " << buffer << std::endl;
-        outFile.close();
-    }
-
-    //TO DO: send confirmation to client
-    const char* confirmation = "Data received";
-    send(ServerSocket, confirmation, strlen(confirmation), 0);
 
     // Logout
     string logoutMsg = "LOGOUT\n";
@@ -115,14 +136,12 @@ int main()
         cout << "Logout failed. Continuing..." << endl;
     }
 
-    //closes connection and socket
+    // Close connection and socket
     closesocket(ServerSocket);
 
-    //frees Winsock DLL resources
-    WSACleanup();
+    // Free Winsock DLL resources
 
-    //This code has been added to simply keep the console window open until you
-    //type a character.
+    WSACleanup();
 
     int garbage;
     cin >> garbage;
@@ -130,3 +149,5 @@ int main()
     return 1;
 
 }
+
+
