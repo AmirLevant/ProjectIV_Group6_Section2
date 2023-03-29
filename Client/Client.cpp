@@ -10,27 +10,42 @@
 
 using namespace std;
 
-//starts Winsock DLLs
-WSADATA wsaData;
-if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
-	return 0;
+int InitClient()
+{
+	//starts Winsock DLLs
+	WSADATA wsaData;
+	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
+		return 0;
+	}
+
+	//initializes socket. SOCK_STREAM: TCP
+	SOCKET ClientSocket;
+	ClientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (ClientSocket == INVALID_SOCKET) {
+		WSACleanup();
+		return 0;
+	}
+
+	return ClientSocket;
 }
 
-//initializes socket. SOCK_STREAM: TCP
-SOCKET ClientSocket;
-ClientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-if (ClientSocket == INVALID_SOCKET) {
-	WSACleanup();
-	return 0;
+void ConnectToServer(SOCKET ClientSocket)
+{
+	//Connect socket to specified server
+	sockaddr_in SvrAddr;
+	SvrAddr.sin_family = AF_INET;						//Address family type itnernet
+	SvrAddr.sin_port = htons(27000);					//port (host to network conversion)
+	SvrAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//IP address
+	if ((connect(ClientSocket, (struct sockaddr*)&SvrAddr, sizeof(SvrAddr))) == SOCKET_ERROR) {
+		closesocket(ClientSocket);
+		WSACleanup();
+	}
 }
 
-//Connect socket to specified server
-sockaddr_in SvrAddr;
-SvrAddr.sin_family = AF_INET;						//Address family type itnernet
-SvrAddr.sin_port = htons(27000);					//port (host to network conversion)
-SvrAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	//IP address
-if ((connect(ClientSocket, (struct sockaddr*)&SvrAddr, sizeof(SvrAddr))) == SOCKET_ERROR) {
-	closesocket(ClientSocket);
-	WSACleanup();
-	return 0;
+void RunClient()
+{
+	SOCKET ClientSocket = InitClient();
+	ConnectToServer(ClientSocket);
+
+	
 }
