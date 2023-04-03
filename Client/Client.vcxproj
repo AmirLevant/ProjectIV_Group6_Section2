@@ -122,9 +122,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="LoginPage.cpp" />
     <ClCompile Include="MyForm.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="LoginPage.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
     <ClInclude Include="Post.h" />
     <ClInclude Include="MyForm.h">
       <FileType>CppForm</FileType>
@@ -132,6 +137,9 @@
     <ClInclude Include="PktDef.h" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="LoginPage.resx">
+      <DependentUpon>LoginPage.h</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MyForm.resx">
       <DependentUpon>MyForm.h</DependentUpon>
     </EmbeddedResource>

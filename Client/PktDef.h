@@ -1,5 +1,11 @@
 #pragma once
+#include <windows.networking.sockets.h>
+#pragma comment(lib, "Ws2_32.lib")
+
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <stdio.h>
 
 class PktDef
 {
@@ -60,7 +66,7 @@ public:
 		packet.Head.DestAddr = (char)dest;
 	}
 
-	void setDataType(string type)
+	void setDataType(std::string type)
 	{
 		if (type == "image")
 			packet.Head.dataType = 0;

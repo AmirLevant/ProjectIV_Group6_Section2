@@ -1,5 +1,8 @@
 #pragma once
 
+#include "Client.h"
+#include "LoginPage.h"
+
 namespace Client {
 
 	using namespace System;
@@ -14,13 +17,15 @@ namespace Client {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+	private:
+		SOCKET ClientSocket;
+
 	public:
 		MyForm(void)
 		{
 			InitializeComponent();
-			//
-			//TODO: Add the constructor code here
-			//
+			ClientSocket = InitClient();
+			ConnectToServer(ClientSocket);
 		}
 
 	protected:
@@ -138,8 +143,9 @@ namespace Client {
 			this->button6->Name = L"button6";
 			this->button6->Size = System::Drawing::Size(75, 23);
 			this->button6->TabIndex = 7;
-			this->button6->Text = L"view friends";
+			this->button6->Text = L"Login";
 			this->button6->UseVisualStyleBackColor = true;
+			this->button6->Click += gcnew System::EventHandler(this, &MyForm::button6_Click);
 			// 
 			// MyForm
 			// 
@@ -162,5 +168,9 @@ namespace Client {
 
 		}
 #pragma endregion
-	};
+	private: System::Void button6_Click(System::Object^ sender, System::EventArgs^ e) {
+		LoginPage lp;
+		lp.ShowDialog();
+	}
+};
 }

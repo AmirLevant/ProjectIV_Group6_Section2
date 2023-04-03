@@ -1,16 +1,11 @@
 // Create client connection
-#include <windows.networking.sockets.h>
-#pragma comment(lib, "Ws2_32.lib")
 
-#include <iostream>
-#include <string>
-#include <fstream>
 #include "PktDef.h"
 #define MAX_NUM_OF_BYTES 1019
 
 using namespace std;
 
-int InitClient()
+SOCKET InitClient()
 {
 	//starts Winsock DLLs
 	WSADATA wsaData;
@@ -42,9 +37,4 @@ void ConnectToServer(SOCKET ClientSocket)
 	}
 }
 
-void RunClient()
-{
-	SOCKET ClientSocket = InitClient();
-	ConnectToServer(ClientSocket);
-}
 
