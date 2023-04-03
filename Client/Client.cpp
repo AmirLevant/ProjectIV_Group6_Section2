@@ -46,6 +46,5 @@ void RunClient()
 {
 	SOCKET ClientSocket = InitClient();
 	ConnectToServer(ClientSocket);
-
-	
 }
+
