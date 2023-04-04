@@ -1,18 +1,20 @@
 #pragma once
 #include <iostream>
 #include <string.h>
+#include <fstream>
+#include <stdio.h>
+#include <string>
 
 using namespace std;
 
 class Post
 {
 	private:
-		string postCaption;
-		string postUserName;
 		string postDate;
+		string postUserName;
+		string postCaption;
 		int postLikeAmount;
-		char* postImage;
-
+		string imageFilePath;
 
 	public:
 		Post()
@@ -21,22 +23,16 @@ class Post
 			postUserName = "";
 			postDate = "";
 			postLikeAmount = 0;
-			postImage = nullptr;
+			imageFilePath = "";
 		}
 
-		Post(string newCaption, string newName, string newDate, int newAmount, char* newImage)
+		Post(string newCaption, string newName, string newDate, int newAmount, string filePath)
 		{
 			postCaption = newCaption;
 			postUserName = newName;
 			postDate = newDate;
 			postLikeAmount = newAmount;
-			postImage = newImage;
-		}
-
-		~Post()
-		{
-			if(postImage)
-				delete[] postImage;
+			imageFilePath = filePath;
 		}
 
 		void setCaption(string newCaption) // Post Caption
@@ -79,14 +75,21 @@ class Post
 			return postLikeAmount;
 		}
 
-		void setImage(char* newImage) // Post Image
+		void setFilePath(string filePath) // Post Image
 		{
-			postImage = newImage;
+			imageFilePath = filePath;
 		}
 
-		char* getImage()
+		string getFilePath()
 		{
-			return postImage;
+			return imageFilePath;
 		}
-	
+
+		void reset()
+		{
+			postCaption = "";
+			postUserName = "";
+			postDate = "";
+			postLikeAmount = 0;
+		}
 };

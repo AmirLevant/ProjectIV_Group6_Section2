@@ -1,0 +1,28 @@
+Saved Post Data: 
+04-04-2023 11-56-29
+User Name: 
+Caption: This is a caption
+File Path: C:\Users\andre\OneDrive\Pictures\20180324_171741876_iOS.jpg
+Like Amout: 0
+
+Saved Post Data: 
+04-04-2023 11-57-09
+User Name: 
+Caption: Another caption
+File Path: D:\Users\andre\Desktop\SS3.png
+Like Amout: 0
+
+Saved Post Data: 
+04-04-2023 12-38-13
+User Name: 
+Caption: My caption for my photo is this
+File Path: D:\Users\andre\Desktop\SS1.png
+Like Amout: 0
+
+Saved Post Data: 
+04-04-2023 16-48-21
+User Name: 
+Caption: Instagram caption right here
+File Path: D:\Users\andre\Desktop\SS3.png
+Like Amout: 0
+

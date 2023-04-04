@@ -2,6 +2,8 @@
 
 #include "Client.h"
 #include "LoginPage.h"
+#include "NewPost.h"
+#include "LogToFile.h"
 
 namespace Client {
 
@@ -11,6 +13,7 @@ namespace Client {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::IO;
 
 	/// <summary>
 	/// Summary for MyForm
@@ -44,7 +47,8 @@ namespace Client {
 	private: System::Windows::Forms::PictureBox^ pictureBox1;
 	private: System::Windows::Forms::Button^ button1;
 	private: System::Windows::Forms::Button^ button2;
-	private: System::Windows::Forms::Button^ button3;
+	private: System::Windows::Forms::Button^ newPost_button;
+
 	private: System::Windows::Forms::Button^ button4;
 	private: System::Windows::Forms::Button^ button5;
 	private: System::Windows::Forms::Button^ button6;
@@ -66,7 +70,7 @@ namespace Client {
 			this->pictureBox1 = (gcnew System::Windows::Forms::PictureBox());
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->button2 = (gcnew System::Windows::Forms::Button());
-			this->button3 = (gcnew System::Windows::Forms::Button());
+			this->newPost_button = (gcnew System::Windows::Forms::Button());
 			this->button4 = (gcnew System::Windows::Forms::Button());
 			this->button5 = (gcnew System::Windows::Forms::Button());
 			this->button6 = (gcnew System::Windows::Forms::Button());
@@ -89,6 +93,7 @@ namespace Client {
 			this->pictureBox1->Location = System::Drawing::Point(272, 104);
 			this->pictureBox1->Name = L"pictureBox1";
 			this->pictureBox1->Size = System::Drawing::Size(226, 242);
+			this->pictureBox1->SizeMode = System::Windows::Forms::PictureBoxSizeMode::StretchImage;
 			this->pictureBox1->TabIndex = 1;
 			this->pictureBox1->TabStop = false;
 			// 
@@ -110,14 +115,15 @@ namespace Client {
 			this->button2->Text = L"previous post";
 			this->button2->UseVisualStyleBackColor = true;
 			// 
-			// button3
+			// newPost_button
 			// 
-			this->button3->Location = System::Drawing::Point(572, 117);
-			this->button3->Name = L"button3";
-			this->button3->Size = System::Drawing::Size(75, 23);
-			this->button3->TabIndex = 4;
-			this->button3->Text = L"new post";
-			this->button3->UseVisualStyleBackColor = true;
+			this->newPost_button->Location = System::Drawing::Point(572, 117);
+			this->newPost_button->Name = L"newPost_button";
+			this->newPost_button->Size = System::Drawing::Size(75, 23);
+			this->newPost_button->TabIndex = 4;
+			this->newPost_button->Text = L"new post";
+			this->newPost_button->UseVisualStyleBackColor = true;
+			this->newPost_button->Click += gcnew System::EventHandler(this, &MyForm::newPost_button_Click);
 			// 
 			// button4
 			// 
@@ -155,7 +161,7 @@ namespace Client {
 			this->Controls->Add(this->button6);
 			this->Controls->Add(this->button5);
 			this->Controls->Add(this->button4);
-			this->Controls->Add(this->button3);
+			this->Controls->Add(this->newPost_button);
 			this->Controls->Add(this->button2);
 			this->Controls->Add(this->button1);
 			this->Controls->Add(this->pictureBox1);
@@ -171,6 +177,15 @@ namespace Client {
 	private: System::Void button6_Click(System::Object^ sender, System::EventArgs^ e) {
 		LoginPage lp;
 		lp.ShowDialog();
+	}
+
+	private: System::Void newPost_button_Click(System::Object^ sender, System::EventArgs^ e) {
+		Post* newPost = new Post();
+		
+		NewPost np(newPost);
+		np.ShowDialog();
+
+		writePostToFile(newPost);
 	}
 };
 }
