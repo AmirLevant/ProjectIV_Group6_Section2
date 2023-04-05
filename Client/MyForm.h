@@ -198,6 +198,8 @@ namespace Client {
 		char* TxBuffer;
 		bool firstPacket = true;
 
+		ofstream ofs;
+		ofs.open("image.jpeg", ios::binary);
 		if (ifs.is_open())
 		{
 			while (!ifs.eof())
@@ -222,12 +224,16 @@ namespace Client {
 
 				writePacketRawDataToFile(TxBuffer, size);
 
-				PktDef recPkt(TxBuffer);
+				PktDef* recPkt = new PktDef(TxBuffer);
 				Post* newPost = new Post();
 
-				recPkt.parseData(newPost);
+				char* imageStartingPoint = recPkt->parseData(newPost);
+				ofs.write(imageStartingPoint, imageDataSize);
 
 				firstPacket = false;
+
+				/*delete newPost;
+				delete recPkt;*/
 			}
 		}
 	}

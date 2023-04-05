@@ -61,21 +61,22 @@ public:
 		memcpy(packet.Data, buffer + offset, size);
 	}
 
-	void parseData(Post* post)
+	char* parseData(Post* post)		// Returning pointer to image data
 	{
 		int offset = 0;
 		if (packet.Head.firstPacket)
 		{
 			string date;
-			memcpy(&date, packet.Data, packet.Head.dateLength);
+			//memcpy(&date[0], packet.Data, packet.Head.dateLength);
+			date.assign(packet.Data, packet.Head.dateLength);
 			offset += packet.Head.dateLength;
 
 			string userName;
-			memcpy(&userName, packet.Data + offset, packet.Head.userNameLength);
+			userName.assign(packet.Data + offset, packet.Head.userNameLength);
 			offset += packet.Head.userNameLength;
 
 			string caption;
-			memcpy(&caption, packet.Data + offset, packet.Head.captionLength);
+			caption.assign(packet.Data + offset, packet.Head.captionLength);
 			offset += packet.Head.captionLength;
 
 			int likes;
@@ -90,7 +91,7 @@ public:
 		else						// Don't set post data if not first packet as that data has been cleared
 			offset = packet.Head.dateLength + packet.Head.userNameLength + packet.Head.captionLength + sizeof(int);
 
-	//	return (packet.Data + offset);
+		return (packet.Data + offset);
 	}
 
 	void setDateLength(int length)
@@ -179,8 +180,9 @@ public:
 		memcpy(packet.Data + offset, &post->getCaption()[0], packet.Head.captionLength);
 		offset += packet.Head.captionLength;
 
-		int value = post->getLikeAmount();
-		memcpy(packet.Data + offset, &value, sizeof(int));
+		*(int*)(packet.Data + offset) = post->getLikeAmount();
+		/*int value = post->getLikeAmount();
+		memcpy(packet.Data + offset, &post->getLikeAmount(), sizeof(int));*/
 		offset += sizeof(int);
 
 		memcpy(packet.Data + offset, imageData, packet.Head.imageLength);
@@ -200,8 +202,7 @@ public:
 		if (pSerialBuff)
 			delete[] pSerialBuff;
 
-		size = sizeof(packet.Head.dateLength) + sizeof(packet.Head.userNameLength) + sizeof(packet.Head.captionLength) + sizeof(packet.Head.imageLength)
-			+ sizeof(packet.Head.firstPacket) + sizeof(packet.Head.postFinishFlag) + dataSize;
+		size = getHeaderSize() + dataSize;
 
 		pSerialBuff = new char[size];		// Character array should be able to hold data of entire packet
 		int offset = 0;

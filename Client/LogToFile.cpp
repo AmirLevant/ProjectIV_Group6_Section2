@@ -35,6 +35,7 @@ void writePacketRawDataToFile(char* buffer, int size) // Where size is the size 
 		ofs << "First Packet Status: " << packet.getFirstPacket() << std::endl;
 		ofs << "Post Finish Status: " << packet.getPostFinishFlag() << std::endl;*/
 		ofs.write(buffer, size);
+		ofs << std::endl;
 	}
 
 	ofs.close();
