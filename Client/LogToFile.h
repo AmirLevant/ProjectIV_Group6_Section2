@@ -1,5 +1,6 @@
 #pragma once
-#include "Post.h"
+#include "PktDef.h"
 #include <fstream>
 
 void writePostToFile(Post* post);
+void writePacketRawDataToFile(char* buffer, int size);

@@ -61,7 +61,7 @@ public:
 		memcpy(packet.Data, buffer + offset, size);
 	}
 
-	char* ParseData(Post* post)
+	void parseData(Post* post)
 	{
 		int offset = 0;
 		if (packet.Head.firstPacket)
@@ -86,14 +86,11 @@ public:
 			post->setName(userName);
 			post->setCaption(caption);
 			post->setLikeAmount(likes);
-			
-			return (packet.Data + offset);
 		}
-		else
-		{						// Don't set post data if not first packet as that data has been cleared
+		else						// Don't set post data if not first packet as that data has been cleared
 			offset = packet.Head.dateLength + packet.Head.userNameLength + packet.Head.captionLength + sizeof(int);
-			return (packet.Data + offset);
-		}
+
+	//	return (packet.Data + offset);
 	}
 
 	void setDateLength(int length)
@@ -141,7 +138,7 @@ public:
 		packet.Head.firstPacket = boolean;
 	}
 
-	bool getNotFirstPacket()
+	bool getFirstPacket()
 	{
 		return packet.Head.firstPacket;
 	}
@@ -173,13 +170,13 @@ public:
 		
 		int offset = 0;
 
-		memcpy(packet.Data, &post->getDate(), packet.Head.dateLength);
+		memcpy(packet.Data, &post->getDate()[0], packet.Head.dateLength);
 		offset += packet.Head.dateLength;
 
-		memcpy(packet.Data + offset, &post->getName(), packet.Head.userNameLength);
+		memcpy(packet.Data + offset, &post->getName()[0], packet.Head.userNameLength);
 		offset += packet.Head.userNameLength;
 
-		memcpy(packet.Data + offset, &post->getCaption(), packet.Head.captionLength);
+		memcpy(packet.Data + offset, &post->getCaption()[0], packet.Head.captionLength);
 		offset += packet.Head.captionLength;
 
 		int value = post->getLikeAmount();
@@ -193,7 +190,7 @@ public:
 		return totalSize;
 	}
 
-	char* getAddressOfImageData()
+	char* getAddressOfData()
 	{
 		return packet.Data;
 	}
@@ -227,9 +224,15 @@ public:
 		memcpy(pSerialBuff + offset, &packet.Head.postFinishFlag, sizeof(packet.Head.postFinishFlag));
 		offset += sizeof(packet.Head.postFinishFlag);
 
-		memcpy(pSerialBuff + offset, &packet.Data, dataSize);
+		memcpy(pSerialBuff + offset, packet.Data, dataSize);
 
 		return pSerialBuff;
+	}
+
+	int getHeaderSize()
+	{
+		return sizeof(packet.Head.dateLength) + sizeof(packet.Head.userNameLength) + sizeof(packet.Head.captionLength) + sizeof(packet.Head.imageLength)
+			+ sizeof(packet.Head.firstPacket) + sizeof(packet.Head.postFinishFlag);
 	}
 
 	~PktDef()		// Destructor for packets to delete allocated memory

@@ -92,4 +92,10 @@ class Post
 			postDate = "";
 			postLikeAmount = 0;
 		}
+
+		int getPostSize()		// Size of post data for packet
+		{
+			int size = postDate.length() + 1 + postUserName.length() + 1 + postCaption.length() + 1 + sizeof(int);
+			return size;
+		}
 };

@@ -5,6 +5,9 @@
 #include "NewPost.h"
 #include "LogToFile.h"
 
+#define MAX_PACKET_SIZE 1024
+#define HEADER_SIZE 7
+
 namespace Client {
 
 	using namespace System;
@@ -185,7 +188,48 @@ namespace Client {
 		NewPost np(newPost);
 		np.ShowDialog();
 
+		newPost->setName("Andrew");
+
 		writePostToFile(newPost);
+
+		char* buffer;
+		ifstream ifs;
+		ifs.open(newPost->getFilePath(), ios::binary);
+		char* TxBuffer;
+		bool firstPacket = true;
+
+		if (ifs.is_open())
+		{
+			while (!ifs.eof())
+			{
+				PktDef newPacket;
+
+				if (!firstPacket)
+					newPacket.setFirstPacket(false);
+
+				int imageDataSize = MAX_PACKET_SIZE - newPacket.getHeaderSize() - newPost->getPostSize();
+
+				buffer = new char[imageDataSize];
+
+				ifs.read(buffer, imageDataSize);
+
+				int dataSize = newPacket.setData(newPost, buffer, imageDataSize);
+
+				delete[] buffer;
+
+				int size = 0;
+				TxBuffer = newPacket.SerializeData(size, dataSize);
+
+				writePacketRawDataToFile(TxBuffer, size);
+
+				PktDef recPkt(TxBuffer);
+				Post* newPost = new Post();
+
+				recPkt.parseData(newPost);
+
+				firstPacket = false;
+			}
+		}
 	}
 };
 }
