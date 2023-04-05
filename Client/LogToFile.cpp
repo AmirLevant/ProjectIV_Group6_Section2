@@ -28,14 +28,8 @@ void writePacketRawDataToFile(char* buffer, int size) // Where size is the size 
 	if (ofs.is_open())
 	{
 		ofs << "Packet Data: " << std::endl; 
-		/*ofs << "Date Length: " << packet.getDateLength() << std::endl;
-		ofs << "User Name Length: " << packet.getUserNameLength() << std::endl;
-		ofs << "Caption Length: " << packet.getCaptionLength() << std::endl;
-		ofs << "Image Length " << packet.getImageLength() << std::endl;
-		ofs << "First Packet Status: " << packet.getFirstPacket() << std::endl;
-		ofs << "Post Finish Status: " << packet.getPostFinishFlag() << std::endl;*/
 		ofs.write(buffer, size);
-		ofs << std::endl;
+		ofs << std::endl << std::endl;
 	}
 
 	ofs.close();
