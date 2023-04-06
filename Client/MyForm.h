@@ -31,6 +31,7 @@ namespace Client {
 	private: System::Windows::Forms::Label^ userNameLabel;
 	private: System::Windows::Forms::Label^ likeLabel;
 	private: SOCKET ClientSocket;
+	private: int nextButtonClicks;
 	    
 	public:
 		MyForm(void)
@@ -43,6 +44,8 @@ namespace Client {
 			likeLabel->Visible = false;
 			prevButton->Visible = false;
 			nextButton->Visible = false;
+			nextButtonClicks = 0;
+			textBox1->ReadOnly = true;
 
 			posts = new vector<Post>();
 			ClientSocket = InitClient();
@@ -133,6 +136,7 @@ namespace Client {
 			this->nextButton->TabIndex = 2;
 			this->nextButton->Text = L"next post";
 			this->nextButton->UseVisualStyleBackColor = true;
+			this->nextButton->Click += gcnew System::EventHandler(this, &MyForm::nextButton_Click);
 			// 
 			// prevButton
 			// 
@@ -142,6 +146,7 @@ namespace Client {
 			this->prevButton->TabIndex = 3;
 			this->prevButton->Text = L"previous post";
 			this->prevButton->UseVisualStyleBackColor = true;
+			this->prevButton->Click += gcnew System::EventHandler(this, &MyForm::prevButton_Click);
 			// 
 			// newPost_button
 			// 
@@ -262,6 +267,8 @@ namespace Client {
 		if (posts->size() > 1)
 			nextButton->Visible = true;
 		setPageData(tempPost);
+		prevButton->Visible = false;
+		nextButtonClicks = 0;
 
 		char* buffer;
 		ifstream ifs;
@@ -387,6 +394,30 @@ namespace Client {
 		// Format the string
 		std::string result = std::to_string(hour) + ":" + std::to_string(minute) + " " + ampm;
 		return result;
+	}
+
+	private: System::Void nextButton_Click(System::Object^ sender, System::EventArgs^ e) {
+		nextButtonClicks++;
+
+		setPageData((*posts)[posts->size() - nextButtonClicks - 1]);
+
+		if (nextButtonClicks > 0)
+			prevButton->Visible = true;
+
+		if (nextButtonClicks == (posts->size() - 1))
+			nextButton->Visible = false;
+	}
+
+	private: System::Void prevButton_Click(System::Object^ sender, System::EventArgs^ e) {
+		nextButtonClicks--;
+
+		setPageData((*posts)[posts->size() - nextButtonClicks - 1]);
+
+		if (nextButtonClicks <= 0)
+			prevButton->Visible = false;
+
+		if (nextButtonClicks < (posts->size() - 1))
+			nextButton->Visible = true;
 	}
 };
 }
