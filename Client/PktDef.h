@@ -9,6 +9,7 @@ class PktDef
 	// ***** YOUR CODE GOES HERE ****** //
 	struct Header
 	{
+		unsigned char messageType;			// 0 = Not set, 1 = User login, 2 = Posting to server, 3 = Requesting posts from server, 4 = Request to delete a post, 5 = Request to edit caption
 		unsigned char dateLength;
 		unsigned char userNameLength;
 		unsigned char captionLength;
@@ -38,8 +39,11 @@ public:
 	{
 		int offset = 0;		// To skip characters in the buffer
 
-		memcpy(&packet.Head.dateLength, buffer, sizeof(packet.Head.dateLength));
-		offset += sizeof(char);
+		memcpy(&packet.Head.messageType, buffer, sizeof(packet.Head.messageType));
+		offset += sizeof(packet.Head.messageType);
+
+		memcpy(&packet.Head.dateLength, buffer + offset, sizeof(packet.Head.dateLength));
+		offset += sizeof(packet.Head.dateLength);
 
 		memcpy(&packet.Head.userNameLength, buffer + offset, sizeof(packet.Head.userNameLength));
 		offset += sizeof(packet.Head.userNameLength);
@@ -92,6 +96,16 @@ public:
 			offset = packet.Head.dateLength + packet.Head.userNameLength + packet.Head.captionLength + sizeof(int);
 
 		return (packet.Data + offset);
+	}
+
+	void setMessageType(int messageType)
+	{
+		packet.Head.messageType = (char)messageType;
+	}
+
+	char getMessageType()
+	{
+		return packet.Head.messageType;
 	}
 
 	void setDateLength(int length)
@@ -207,7 +221,10 @@ public:
 		pSerialBuff = new char[size];		// Character array should be able to hold data of entire packet
 		int offset = 0;
 
-		memcpy(pSerialBuff, &packet.Head.dateLength, sizeof(packet.Head.dateLength));		
+		memcpy(pSerialBuff, &packet.Head.messageType, sizeof(packet.Head.messageType));
+		offset += sizeof(packet.Head.messageType);
+
+		memcpy(pSerialBuff + offset, &packet.Head.dateLength, sizeof(packet.Head.dateLength));		
 		offset += sizeof(packet.Head.dateLength);
 
 		memcpy(pSerialBuff + offset, &packet.Head.userNameLength, sizeof(packet.Head.userNameLength));
@@ -232,7 +249,7 @@ public:
 
 	int getHeaderSize()
 	{
-		return sizeof(packet.Head.dateLength) + sizeof(packet.Head.userNameLength) + sizeof(packet.Head.captionLength) + sizeof(packet.Head.imageLength)
+		return sizeof(packet.Head.messageType) + sizeof(packet.Head.dateLength) + sizeof(packet.Head.userNameLength) + sizeof(packet.Head.captionLength) + sizeof(packet.Head.imageLength)
 			+ sizeof(packet.Head.firstPacket) + sizeof(packet.Head.postFinishFlag);
 	}
 

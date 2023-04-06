@@ -102,8 +102,9 @@ namespace Client {
 			// captionBox
 			// 
 			this->captionBox->Location = System::Drawing::Point(300, 139);
+			this->captionBox->Multiline = true;
 			this->captionBox->Name = L"captionBox";
-			this->captionBox->Size = System::Drawing::Size(104, 20);
+			this->captionBox->Size = System::Drawing::Size(159, 151);
 			this->captionBox->TabIndex = 2;
 			this->captionBox->TextChanged += gcnew System::EventHandler(this, &NewPost::captionBox_Changed);
 			// 

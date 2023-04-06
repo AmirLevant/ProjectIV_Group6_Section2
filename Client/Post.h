@@ -4,6 +4,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -98,4 +99,6 @@ class Post
 			int size = postDate.length() + 1 + postUserName.length() + 1 + postCaption.length() + 1 + sizeof(int);
 			return size;
 		}
+
+		~Post() = default;
 };

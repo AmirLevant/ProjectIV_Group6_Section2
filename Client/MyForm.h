@@ -4,6 +4,8 @@
 #include "LoginPage.h"
 #include "NewPost.h"
 #include "LogToFile.h"
+#include <msclr/marshal_cppstd.h>
+#include <map>
 
 #define MAX_PACKET_SIZE 1024
 #define HEADER_SIZE 7
@@ -23,13 +25,26 @@ namespace Client {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
-	private:
-		SOCKET ClientSocket;
-
+	private: vector<Post>* posts;
+	private: System::Windows::Forms::Label^ dateLabel;
+	private: System::Windows::Forms::TextBox^ textBox1;
+	private: System::Windows::Forms::Label^ userNameLabel;
+	private: System::Windows::Forms::Label^ likeLabel;
+	private: SOCKET ClientSocket;
+	    
 	public:
 		MyForm(void)
 		{
 			InitializeComponent();
+
+			userNameLabel->Text = "User";
+			textBox1->Visible = false;
+			dateLabel->Visible = false;
+			likeLabel->Visible = false;
+			prevButton->Visible = false;
+			nextButton->Visible = false;
+
+			posts = new vector<Post>();
 			ClientSocket = InitClient();
 			ConnectToServer(ClientSocket);
 		}
@@ -44,12 +59,18 @@ namespace Client {
 			{
 				delete components;
 			}
+			if (posts)
+			{
+				delete posts;
+			}
 		}
 	private: System::Windows::Forms::Label^ label1;
 	protected:
 	private: System::Windows::Forms::PictureBox^ pictureBox1;
-	private: System::Windows::Forms::Button^ button1;
-	private: System::Windows::Forms::Button^ button2;
+	private: System::Windows::Forms::Button^ nextButton;
+
+	private: System::Windows::Forms::Button^ prevButton;
+
 	private: System::Windows::Forms::Button^ newPost_button;
 
 	private: System::Windows::Forms::Button^ button4;
@@ -71,12 +92,16 @@ namespace Client {
 		{
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->pictureBox1 = (gcnew System::Windows::Forms::PictureBox());
-			this->button1 = (gcnew System::Windows::Forms::Button());
-			this->button2 = (gcnew System::Windows::Forms::Button());
+			this->nextButton = (gcnew System::Windows::Forms::Button());
+			this->prevButton = (gcnew System::Windows::Forms::Button());
 			this->newPost_button = (gcnew System::Windows::Forms::Button());
 			this->button4 = (gcnew System::Windows::Forms::Button());
 			this->button5 = (gcnew System::Windows::Forms::Button());
 			this->button6 = (gcnew System::Windows::Forms::Button());
+			this->dateLabel = (gcnew System::Windows::Forms::Label());
+			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
+			this->userNameLabel = (gcnew System::Windows::Forms::Label());
+			this->likeLabel = (gcnew System::Windows::Forms::Label());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -100,23 +125,23 @@ namespace Client {
 			this->pictureBox1->TabIndex = 1;
 			this->pictureBox1->TabStop = false;
 			// 
-			// button1
+			// nextButton
 			// 
-			this->button1->Location = System::Drawing::Point(403, 395);
-			this->button1->Name = L"button1";
-			this->button1->Size = System::Drawing::Size(86, 23);
-			this->button1->TabIndex = 2;
-			this->button1->Text = L"next post";
-			this->button1->UseVisualStyleBackColor = true;
+			this->nextButton->Location = System::Drawing::Point(403, 395);
+			this->nextButton->Name = L"nextButton";
+			this->nextButton->Size = System::Drawing::Size(86, 23);
+			this->nextButton->TabIndex = 2;
+			this->nextButton->Text = L"next post";
+			this->nextButton->UseVisualStyleBackColor = true;
 			// 
-			// button2
+			// prevButton
 			// 
-			this->button2->Location = System::Drawing::Point(286, 395);
-			this->button2->Name = L"button2";
-			this->button2->Size = System::Drawing::Size(86, 23);
-			this->button2->TabIndex = 3;
-			this->button2->Text = L"previous post";
-			this->button2->UseVisualStyleBackColor = true;
+			this->prevButton->Location = System::Drawing::Point(286, 395);
+			this->prevButton->Name = L"prevButton";
+			this->prevButton->Size = System::Drawing::Size(86, 23);
+			this->prevButton->TabIndex = 3;
+			this->prevButton->Text = L"previous post";
+			this->prevButton->UseVisualStyleBackColor = true;
 			// 
 			// newPost_button
 			// 
@@ -148,7 +173,7 @@ namespace Client {
 			// 
 			// button6
 			// 
-			this->button6->Location = System::Drawing::Point(58, 117);
+			this->button6->Location = System::Drawing::Point(630, 395);
 			this->button6->Name = L"button6";
 			this->button6->Size = System::Drawing::Size(75, 23);
 			this->button6->TabIndex = 7;
@@ -156,17 +181,57 @@ namespace Client {
 			this->button6->UseVisualStyleBackColor = true;
 			this->button6->Click += gcnew System::EventHandler(this, &MyForm::button6_Click);
 			// 
+			// dateLabel
+			// 
+			this->dateLabel->AutoSize = true;
+			this->dateLabel->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
+			this->dateLabel->Location = System::Drawing::Point(58, 104);
+			this->dateLabel->Name = L"dateLabel";
+			this->dateLabel->Size = System::Drawing::Size(51, 20);
+			this->dateLabel->TabIndex = 8;
+			this->dateLabel->Text = L"label2";
+			// 
+			// textBox1
+			// 
+			this->textBox1->Location = System::Drawing::Point(62, 127);
+			this->textBox1->Multiline = true;
+			this->textBox1->Name = L"textBox1";
+			this->textBox1->Size = System::Drawing::Size(155, 180);
+			this->textBox1->TabIndex = 9;
+			// 
+			// userNameLabel
+			// 
+			this->userNameLabel->AutoSize = true;
+			this->userNameLabel->Location = System::Drawing::Point(13, 13);
+			this->userNameLabel->Name = L"userNameLabel";
+			this->userNameLabel->Size = System::Drawing::Size(35, 13);
+			this->userNameLabel->TabIndex = 10;
+			this->userNameLabel->Text = L"label2";
+			// 
+			// likeLabel
+			// 
+			this->likeLabel->AutoSize = true;
+			this->likeLabel->Location = System::Drawing::Point(59, 333);
+			this->likeLabel->Name = L"likeLabel";
+			this->likeLabel->Size = System::Drawing::Size(35, 13);
+			this->likeLabel->TabIndex = 11;
+			this->likeLabel->Text = L"label2";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(784, 450);
+			this->Controls->Add(this->likeLabel);
+			this->Controls->Add(this->userNameLabel);
+			this->Controls->Add(this->textBox1);
+			this->Controls->Add(this->dateLabel);
 			this->Controls->Add(this->button6);
 			this->Controls->Add(this->button5);
 			this->Controls->Add(this->button4);
 			this->Controls->Add(this->newPost_button);
-			this->Controls->Add(this->button2);
-			this->Controls->Add(this->button1);
+			this->Controls->Add(this->prevButton);
+			this->Controls->Add(this->nextButton);
 			this->Controls->Add(this->pictureBox1);
 			this->Controls->Add(this->label1);
 			this->Name = L"MyForm";
@@ -188,9 +253,15 @@ namespace Client {
 		NewPost np(newPost);
 		np.ShowDialog();
 
-		newPost->setName("Andrew");
+		newPost->setName("User");
 
 		writePostToFile(newPost);
+
+		Post tempPost = *newPost;
+		posts->push_back(tempPost);
+		if (posts->size() > 1)
+			nextButton->Visible = true;
+		setPageData(tempPost);
 
 		char* buffer;
 		ifstream ifs;
@@ -205,6 +276,7 @@ namespace Client {
 			while (!ifs.eof())
 			{
 				PktDef newPacket;
+				newPacket.setMessageType(2);
 
 				if (!firstPacket)
 					newPacket.setFirstPacket(false);
@@ -225,17 +297,96 @@ namespace Client {
 				writePacketRawDataToFile(TxBuffer, size);
 
 				PktDef* recPkt = new PktDef(TxBuffer);
-				Post* newPost = new Post();
+				Post* testPost = new Post();
 
-				char* imageStartingPoint = recPkt->parseData(newPost);
+				char* imageStartingPoint = recPkt->parseData(testPost);
+
 				ofs.write(imageStartingPoint, imageDataSize);
 
 				firstPacket = false;
 
-				/*delete newPost;
-				delete recPkt;*/
+			    delete testPost;
+//				delete recPkt;
 			}
 		}
+		ifs.close();
+		ofs.close();
+	}
+
+	void setPageData(Post newPost)
+	{
+		Bitmap^ image = gcnew Bitmap(gcnew String(newPost.getFilePath().c_str()));		// Setting current page data
+		pictureBox1->Image = image;
+		System::String^ sysCaption = msclr::interop::marshal_as<System::String^>(newPost.getCaption());
+		textBox1->Text = sysCaption;
+		textBox1->Visible = true;
+
+		dateLabel->Text = formatDate(newPost.getDate());
+		dateLabel->Visible = true;
+
+		ostringstream os;
+		os << newPost.getLikeAmount() << " Likes";
+		System::String^ sysLikes = msclr::interop::marshal_as<System::String^>(os.str());
+		likeLabel->Text = sysLikes;
+		likeLabel->Visible = true;
+	}
+
+	System::String^ formatDate(string dateTimeString)
+	{
+		std::string dateString = dateTimeString.substr(0, 10);  // Get the date part of the string
+		std::string timeString = dateTimeString.substr(11);     // Get the time part of the string
+
+		std::string formattedDate = convertDate(dateString);     // Use the formatDate function to format the date
+		std::string formattedTime = militaryToStandardTime(timeString);  // Use the militaryToStandardTime function to format the time
+
+		string combined = formattedDate + " " + formattedTime;             // Combine the two formatted strings
+		System::String^ sysDate = msclr::interop::marshal_as<System::String^>(combined);
+		return sysDate;
+	}
+
+	std::string convertDate(std::string dateString)
+	{
+		// Define a mapping of month numbers to month names
+		std::map<std::string, std::string> monthNames = {
+			{"01", "January"}, {"02", "February"}, {"03", "March"}, {"04", "April"},
+			{"05", "May"}, {"06", "June"}, {"07", "July"}, {"08", "August"},
+			{"09", "September"}, {"10", "October"}, {"11", "November"}, {"12", "December"}
+		};
+
+		// Split the date string into day, month, and year components
+		std::stringstream ss(dateString);
+		std::string dayStr, monthStr, yearStr;
+		std::getline(ss, dayStr, '-');
+		std::getline(ss, monthStr, '-');
+		std::getline(ss, yearStr);
+
+		// Convert the month number to a month name using the mapping
+		std::string monthName = monthNames[monthStr];
+
+		// Combine the components into the final string format
+		std::stringstream result;
+		result << monthName << " " << dayStr << ", " << yearStr;
+		return result.str();
+	}
+
+	std::string militaryToStandardTime(const std::string& militaryTime)
+	{
+		// Split the string into its components
+		int hour = std::stoi(militaryTime.substr(0, 2));
+		int minute = std::stoi(militaryTime.substr(3, 2));
+		int second = std::stoi(militaryTime.substr(6, 2));
+
+		// Determine whether it's AM or PM
+		std::string ampm = (hour < 12) ? "AM" : "PM";
+
+		// Convert to 12-hour time
+		hour %= 12;
+		if (hour == 0) 
+			hour = 12;
+
+		// Format the string
+		std::string result = std::to_string(hour) + ":" + std::to_string(minute) + " " + ampm;
+		return result;
 	}
 };
 }
