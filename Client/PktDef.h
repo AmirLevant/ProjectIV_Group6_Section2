@@ -9,7 +9,7 @@ class PktDef
 	// ***** YOUR CODE GOES HERE ****** //
 	struct Header
 	{
-		unsigned char messageType;			// 0 = Not set, 1 = User login, 2 = Posting to server, 3 = Requesting posts from server, 4 = Request to delete a post, 5 = Request to edit caption
+		unsigned char messageType;			// 0 = Not set, 1 = User login, 2 = Posting to server, 3 = Requesting posts from server, 4 = Acknowledgement, 5 = Request to delete a post, 6 = Request to edit caption
 		unsigned char dateLength;
 		unsigned char userNameLength;
 		unsigned char captionLength;
