@@ -20,6 +20,7 @@ namespace Client {
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+	private: int* imagesInFile;
 	private: vector<Post>* posts;
 	private: System::Windows::Forms::Label^ dateLabel;
 	private: System::Windows::Forms::TextBox^ textBox1;
@@ -27,7 +28,9 @@ namespace Client {
 	private: System::Windows::Forms::Label^ likeLabel;
 	private: SOCKET ClientSocket;
 	private: int nextButtonClicks;
+	private: System::Windows::Forms::Button^ logOut_button;
 	private: string* userName;
+	private: Bitmap^ image;
 	    
 	public:
 		MyForm(void)
@@ -45,12 +48,38 @@ namespace Client {
 			newPost_button->Visible = false;
 			editPost_button->Visible = false;
 			deletePost_button->Visible = false;
+			logOut_button->Visible = false;
 
 			posts = new vector<Post>();
 			ClientSocket = InitClient();
 			ConnectToServer(ClientSocket);
 
 			userName = new string;
+		}
+
+		MyForm(int* imagesInFile)
+		{
+			InitializeComponent();
+
+			userNameLabel->Visible = false;
+			textBox1->Visible = false;
+			dateLabel->Visible = false;
+			likeLabel->Visible = false;
+			prevButton->Visible = false;
+			nextButton->Visible = false;
+			nextButtonClicks = 0;
+			textBox1->ReadOnly = true;
+			newPost_button->Visible = false;
+			editPost_button->Visible = false;
+			deletePost_button->Visible = false;
+			logOut_button->Visible = false;
+
+			posts = new vector<Post>();
+			ClientSocket = InitClient();
+			ConnectToServer(ClientSocket);
+
+			userName = new string;
+			this->imagesInFile = imagesInFile;
 		}
 
 	protected:
@@ -66,10 +95,17 @@ namespace Client {
 			if (posts)
 			{
 				delete posts;
+				posts = nullptr;
 			}
 			if (userName)
 			{
 				delete userName;
+				userName = nullptr;
+			}
+			if (image)
+			{
+				delete image;
+				image = nullptr;
 			}
 		}
 	private: System::Windows::Forms::Label^ label1;
@@ -113,6 +149,7 @@ namespace Client {
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			this->userNameLabel = (gcnew System::Windows::Forms::Label());
 			this->likeLabel = (gcnew System::Windows::Forms::Label());
+			this->logOut_button = (gcnew System::Windows::Forms::Button());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -230,11 +267,22 @@ namespace Client {
 			this->likeLabel->TabIndex = 11;
 			this->likeLabel->Text = L"label2";
 			// 
+			// logOut_button
+			// 
+			this->logOut_button->Location = System::Drawing::Point(686, 13);
+			this->logOut_button->Name = L"logOut_button";
+			this->logOut_button->Size = System::Drawing::Size(75, 23);
+			this->logOut_button->TabIndex = 12;
+			this->logOut_button->Text = L"Log Out";
+			this->logOut_button->UseVisualStyleBackColor = true;
+			this->logOut_button->Click += gcnew System::EventHandler(this, &MyForm::logOut_Click);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(784, 450);
+			this->Controls->Add(this->logOut_button);
 			this->Controls->Add(this->likeLabel);
 			this->Controls->Add(this->userNameLabel);
 			this->Controls->Add(this->textBox1);
@@ -266,11 +314,12 @@ namespace Client {
 		newPost_button->Visible = true;
 		editPost_button->Visible = true;
 		deletePost_button->Visible = true;
-		log_button->Text = "Log out";
+		logOut_button->Visible = true;
 
 		receiveAllPosts();
 
-		setPageData((*posts)[posts->size() - 1]);
+		if (posts->size() > 0)
+			setPageData((*posts)[posts->size() - 1]);
 		if (posts->size() > 1)
 			nextButton->Visible = true;
 	}
@@ -370,8 +419,15 @@ namespace Client {
 
 	void setPageData(Post newPost)
 	{
-		Bitmap^ image = gcnew Bitmap(gcnew String(newPost.getFilePath().c_str()));		// Setting current page data
+		if (image)
+		{
+			delete image;
+			image = nullptr;
+		}
+
+		image = gcnew Bitmap(gcnew String(newPost.getFilePath().c_str()));		// Setting current page data
 		pictureBox1->Image = image;
+
 		System::String^ sysCaption = msclr::interop::marshal_as<System::String^>(newPost.getCaption());
 		textBox1->Text = sysCaption;
 		textBox1->Visible = true;
@@ -546,6 +602,7 @@ namespace Client {
 		} while (moreData);
 
 		sendAckPacket();
+		*imagesInFile = numImagesReceived;
 	}
 
 	void sendAckPacket()
@@ -567,6 +624,37 @@ namespace Client {
 		send(ClientSocket, TxBuffer, size, 0);
 
 		delete ackPost;
+	}
+
+	private: System::Void logOut_Click(System::Object^ sender, System::EventArgs^ e) {
+
+		char* TxBuffer;
+		char RxBuffer[1024];
+
+		Post* logOut = new Post();
+		PktDef logOutPacket;
+		logOutPacket.setMessageType(7);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = logOutPacket.setData(logOut, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = logOutPacket.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ClientSocket, TxBuffer, size, 0);
+
+		recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+		PktDef recPacket(RxBuffer);
+
+		if (recPacket.getMessageType() != 4)
+			exit(1);
+
+		delete logOut;
+
+		this->Close();
 	}
 };
 }

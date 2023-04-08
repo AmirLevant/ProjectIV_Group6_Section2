@@ -15,27 +15,31 @@ int main()
 	if (ServerSocket < 0)
 		return 1;
 
-	SOCKET ConnectionSocket = listenForConnection(ServerSocket);
-	if (ConnectionSocket < 0)
-		return 1;
-
-	string userName = beginUserLogin(ConnectionSocket);
-
-	User newUser;
-	newUser.setUserName(userName);
-	newUser.loadPosts();
-	newUser.sendAllPosts(ConnectionSocket);
-
-	bool logout;
+	SOCKET ConnectionSocket;
+	string quitStatus;
 	do
 	{
-		char RxBuffer[1024];
+		ConnectionSocket = listenForConnection(ServerSocket);
+		if (ConnectionSocket < 0)
+			return 1;
 
-		recv(ConnectionSocket, RxBuffer, sizeof(RxBuffer), 0);
+		string userName = beginUserLogin(ConnectionSocket);
 
-		logout = serverSwitch(RxBuffer, ConnectionSocket, newUser);
+		User newUser;
+		newUser.setUserName(userName);
+		newUser.loadPosts();
+		newUser.sendAllPosts(ConnectionSocket);
 
-	} while (!logout);
+		do
+		{
+			char RxBuffer[1024];
+
+			recv(ConnectionSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+			quitStatus = serverSwitch(RxBuffer, ConnectionSocket, newUser);
+
+		} while (quitStatus != "logout" && quitStatus != "quit");
+	} while (quitStatus != "quit");
 	
 	closesocket(ConnectionSocket);	//closes incoming socket
 	closesocket(ServerSocket);	    //closes server socket	
