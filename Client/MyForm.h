@@ -298,9 +298,8 @@ namespace Client {
 		ifs.open(newPost->getFilePath(), ios::binary);
 		char* TxBuffer;		// For transmitting entire packet to server
 		bool firstPacket = true;
+		char RxBuffer[1024];
 
-		ofstream ofs;
-		ofs.open("image.jpeg", ios::binary);
 		if (ifs.is_open())
 		{
 			while (!ifs.eof())
@@ -312,10 +311,10 @@ namespace Client {
 					newPacket.setFirstPacket(false);
 
 				int imageDataSize = MAX_PACKET_SIZE - newPacket.getHeaderSize() - newPost->getPostSize();
-
 				buffer = new char[imageDataSize];
 
 				ifs.read(buffer, imageDataSize);
+				imageDataSize = ifs.gcount();
 
 				int dataSize = newPacket.setData(newPost, buffer, imageDataSize);
 
@@ -326,21 +325,47 @@ namespace Client {
 
 				writePacketRawDataToFile(TxBuffer, size, "Sent");
 
-				PktDef* recPkt = new PktDef(TxBuffer);
-				Post* testPost = new Post();
+				send(ClientSocket, TxBuffer, size, 0);
 
-				char* imageStartingPoint = recPkt->parseData(testPost);
+				recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
 
-				ofs.write(imageStartingPoint, imageDataSize);
+				PktDef recPacket(RxBuffer);
+
+				if (recPacket.getMessageType() != 4)
+					exit(1);
 
 				firstPacket = false;
-
-			    delete testPost;
-//				delete recPkt;
 			}
 		}
 		ifs.close();
-		ofs.close();
+		delete newPost;
+
+
+		Post* postFinished = new Post();
+		PktDef finalPacket;
+		finalPacket.setPostFinishFlag(true);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = finalPacket.setData(postFinished, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = finalPacket.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ClientSocket, TxBuffer, size, 0);
+
+		recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+		PktDef newPacket(RxBuffer);
+
+		if (newPacket.getMessageType() != 4)
+		{
+			delete postFinished;
+			exit(1);
+		}
+
+		delete postFinished;
 	}
 
 	void setPageData(Post newPost)
@@ -493,13 +518,6 @@ namespace Client {
 
 						int imageDataSize = newPacket.getImageLength();
 						ofs.write(imageStartingPoint, imageDataSize);
-
-						if (newPacket.getFirstPacket() == true)
-						{
-							Post tempPost = *loadPost;
-							tempPost.setFilePath(os.str());
-							posts->push_back(tempPost);
-						}
 					}
 					else
 					{

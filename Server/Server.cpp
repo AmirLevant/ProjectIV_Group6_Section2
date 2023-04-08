@@ -1,12 +1,16 @@
 #include "UserLogin.h"
 #include "LogToFile.h"
+#include "ServerStateSwtich.h"
 #include "User.h"
+#include <time.h>
 
 SOCKET createSocket();
 SOCKET listenForConnection(SOCKET ServerSocket);
 
 int main()
 {
+	srand(time(NULL));
+
 	SOCKET ServerSocket = createSocket();
 	if (ServerSocket < 0)
 		return 1;
@@ -21,6 +25,17 @@ int main()
 	newUser.setUserName(userName);
 	newUser.loadPosts();
 	newUser.sendAllPosts(ConnectionSocket);
+
+	bool logout;
+	do
+	{
+		char RxBuffer[1024];
+
+		recv(ConnectionSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+		logout = serverSwitch(RxBuffer, ConnectionSocket, newUser);
+
+	} while (!logout);
 	
 	closesocket(ConnectionSocket);	//closes incoming socket
 	closesocket(ServerSocket);	    //closes server socket	

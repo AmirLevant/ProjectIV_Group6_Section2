@@ -1,5 +1,5 @@
 #pragma once
-#include "../Client/PktDef.h"
+#include "LogToFile.h"
 #include <sstream>
 
 #define MAX_PACKET_SIZE 1024
@@ -198,4 +198,133 @@ public:
 			delete allFinished;
 	
 	}
+
+	void receivePost(SOCKET ConnectionSocket, char* RxBuffer)
+	{
+		char* TxBuffer;
+		char buffer[1024];
+		Post* newPost = new Post();
+		PktDef recPacket(RxBuffer);
+		writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
+
+		ostringstream os;
+		removeTerminatingChar(userName);
+		os << userName << '/' << (posts->size() + 1) << ".jpg";
+		addTerminatingChar(userName);
+		ofstream ofs;
+
+		bool firstPacket = true;
+
+		ofs.open(os.str(), ios::binary);
+		if (ofs.is_open())
+		{
+			while (recPacket.getPostFinishFlag() != true)
+			{
+				char* imageStartingPoint;
+				if (!firstPacket)
+				{
+					recv(ConnectionSocket, buffer, sizeof(buffer), 0);
+
+					PktDef newPacket(buffer);
+					writePacketRawDataToFile(buffer, MAX_PACKET_SIZE, "Received");
+
+					if (newPacket.getPostFinishFlag() == true)
+						break;
+
+					imageStartingPoint = newPacket.parseData(newPost);
+
+					int imageDataSize = newPacket.getImageLength();
+					ofs.write(imageStartingPoint, imageDataSize);
+
+				}
+				else
+				{
+					imageStartingPoint = recPacket.parseData(newPost);
+
+					int imageDataSize = recPacket.getImageLength();
+
+					ofs.write(imageStartingPoint, imageDataSize);
+
+					if (recPacket.getFirstPacket() == true)
+					{
+						Post tempPost = *newPost;
+						tempPost.setFilePath(os.str());
+
+						int randLikes = (rand() % 200) + 1;
+						tempPost.setLikeAmount(randLikes);
+
+						saveToServer(tempPost);
+
+						posts->push_back(tempPost);
+					}
+					firstPacket = false;
+				}
+
+				Post* ackPost = new Post();
+				PktDef ackPkt;
+				ackPkt.setMessageType(4);
+
+				char garbageData = { '\0' };
+				char* garbagePtr = &garbageData;
+				int dataSize = ackPkt.setData(ackPost, garbagePtr, 1);
+
+				int size = 0;
+				TxBuffer = ackPkt.SerializeData(size, dataSize);
+				writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+				send(ConnectionSocket, TxBuffer, size, 0);
+
+				delete ackPost;
+			}
+			
+		}
+		ofs.close();
+
+		Post* ackPost = new Post();
+		PktDef ackPkt;
+		ackPkt.setMessageType(4);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = ackPkt.setData(ackPost, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = ackPkt.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ConnectionSocket, TxBuffer, size, 0);
+
+		delete ackPost;
+	}
+
+	void saveToServer(Post post)
+	{
+		ofstream ofs;
+
+		ostringstream os;
+		removeTerminatingChar(userName);
+		os << userName << "/posts.txt";
+		ofs.open(os.str(), ios::app);
+		addTerminatingChar(userName);
+
+		string date = post.getDate();
+		removeTerminatingChar(date);
+
+		string name = post.getName();
+		removeTerminatingChar(name);
+
+		string caption = post.getCaption();
+		removeTerminatingChar(caption);
+
+		if (ofs.is_open())
+		{
+			ostringstream postString;
+			postString << endl << date << '$' << name << '$' << caption << '$' << post.getFilePath() << '$' << post.getLikeAmount();
+
+			ofs << postString.str();
+		}
+
+		ofs.close();
+	}
 };
+
