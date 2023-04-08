@@ -27,7 +27,7 @@ void writePacketRawDataToFile(char* buffer, int size, string status) // Where si
 
 	if (ofs.is_open())
 	{
-		ofs << status << " Packet Data: " << std::endl; 
+		ofs << status << " Packet Data: " << std::endl;
 		ofs.write(buffer, size);
 		ofs << std::endl << std::endl;
 	}

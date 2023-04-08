@@ -9,7 +9,7 @@ class PktDef
 	// ***** YOUR CODE GOES HERE ****** //
 	struct Header
 	{
-		unsigned char messageType;			// 0 = Not set, 1 = User login, 2 = Posting to server, 3 = Requesting posts from server, 4 = Acknowledgement, 5 = Request to delete a post, 6 = Request to edit caption
+		unsigned char messageType;			// 0 = All posts sent, 1 = User login, 2 = Posting to server, 3 = Requesting posts from server, 4 = Acknowledgement, 5 = Request to delete a post, 6 = Request to edit caption, 7 = Request to logout
 		unsigned char dateLength;
 		unsigned char userNameLength;
 		unsigned char captionLength;
@@ -37,6 +37,8 @@ public:
 
 	PktDef(char* buffer)
 	{
+		pSerialBuff = nullptr;
+
 		int offset = 0;		// To skip characters in the buffer
 
 		memcpy(&packet.Head.messageType, buffer, sizeof(packet.Head.messageType));
@@ -170,8 +172,6 @@ public:
 
 	int setData(Post* post, char* imageData, int size)			// Where size is the length of image data being sent in the specific packet
 	{
-		if (packet.Data)
-			delete[] packet.Data;
 
 		int totalSize;
 
@@ -213,8 +213,6 @@ public:
 
 	char* SerializeData(int& size, int dataSize)		// Size will be size of total packet, dataSize is size of the data
 	{
-		if (pSerialBuff)
-			delete[] pSerialBuff;
 
 		size = getHeaderSize() + dataSize;
 

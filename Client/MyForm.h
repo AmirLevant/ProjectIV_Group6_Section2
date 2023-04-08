@@ -1,14 +1,9 @@
 #pragma once
-
-#include "Client.h"
 #include "LoginPage.h"
 #include "NewPost.h"
-#include "LogToFile.h"
-#include <msclr/marshal_cppstd.h>
 #include <map>
 
 #define MAX_PACKET_SIZE 1024
-#define HEADER_SIZE 7
 
 namespace Client {
 
@@ -32,13 +27,14 @@ namespace Client {
 	private: System::Windows::Forms::Label^ likeLabel;
 	private: SOCKET ClientSocket;
 	private: int nextButtonClicks;
+	private: string* userName;
 	    
 	public:
 		MyForm(void)
 		{
 			InitializeComponent();
 
-			userNameLabel->Text = "User";
+			userNameLabel->Visible = false;
 			textBox1->Visible = false;
 			dateLabel->Visible = false;
 			likeLabel->Visible = false;
@@ -46,10 +42,15 @@ namespace Client {
 			nextButton->Visible = false;
 			nextButtonClicks = 0;
 			textBox1->ReadOnly = true;
+			newPost_button->Visible = false;
+			editPost_button->Visible = false;
+			deletePost_button->Visible = false;
 
 			posts = new vector<Post>();
 			ClientSocket = InitClient();
 			ConnectToServer(ClientSocket);
+
+			userName = new string;
 		}
 
 	protected:
@@ -66,6 +67,10 @@ namespace Client {
 			{
 				delete posts;
 			}
+			if (userName)
+			{
+				delete userName;
+			}
 		}
 	private: System::Windows::Forms::Label^ label1;
 	protected:
@@ -75,10 +80,13 @@ namespace Client {
 	private: System::Windows::Forms::Button^ prevButton;
 
 	private: System::Windows::Forms::Button^ newPost_button;
+	private: System::Windows::Forms::Button^ editPost_button;
+	private: System::Windows::Forms::Button^ deletePost_button;
+	private: System::Windows::Forms::Button^ log_button;
 
-	private: System::Windows::Forms::Button^ button4;
-	private: System::Windows::Forms::Button^ button5;
-	private: System::Windows::Forms::Button^ button6;
+
+
+
 
 	private:
 		/// <summary>
@@ -98,9 +106,9 @@ namespace Client {
 			this->nextButton = (gcnew System::Windows::Forms::Button());
 			this->prevButton = (gcnew System::Windows::Forms::Button());
 			this->newPost_button = (gcnew System::Windows::Forms::Button());
-			this->button4 = (gcnew System::Windows::Forms::Button());
-			this->button5 = (gcnew System::Windows::Forms::Button());
-			this->button6 = (gcnew System::Windows::Forms::Button());
+			this->editPost_button = (gcnew System::Windows::Forms::Button());
+			this->deletePost_button = (gcnew System::Windows::Forms::Button());
+			this->log_button = (gcnew System::Windows::Forms::Button());
 			this->dateLabel = (gcnew System::Windows::Forms::Label());
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			this->userNameLabel = (gcnew System::Windows::Forms::Label());
@@ -158,33 +166,33 @@ namespace Client {
 			this->newPost_button->UseVisualStyleBackColor = true;
 			this->newPost_button->Click += gcnew System::EventHandler(this, &MyForm::newPost_button_Click);
 			// 
-			// button4
+			// editPost_button
 			// 
-			this->button4->Location = System::Drawing::Point(572, 164);
-			this->button4->Name = L"button4";
-			this->button4->Size = System::Drawing::Size(75, 23);
-			this->button4->TabIndex = 5;
-			this->button4->Text = L"edit post";
-			this->button4->UseVisualStyleBackColor = true;
+			this->editPost_button->Location = System::Drawing::Point(572, 164);
+			this->editPost_button->Name = L"editPost_button";
+			this->editPost_button->Size = System::Drawing::Size(75, 23);
+			this->editPost_button->TabIndex = 5;
+			this->editPost_button->Text = L"edit post";
+			this->editPost_button->UseVisualStyleBackColor = true;
 			// 
-			// button5
+			// deletePost_button
 			// 
-			this->button5->Location = System::Drawing::Point(572, 210);
-			this->button5->Name = L"button5";
-			this->button5->Size = System::Drawing::Size(75, 23);
-			this->button5->TabIndex = 6;
-			this->button5->Text = L"delete post";
-			this->button5->UseVisualStyleBackColor = true;
+			this->deletePost_button->Location = System::Drawing::Point(572, 210);
+			this->deletePost_button->Name = L"deletePost_button";
+			this->deletePost_button->Size = System::Drawing::Size(75, 23);
+			this->deletePost_button->TabIndex = 6;
+			this->deletePost_button->Text = L"delete post";
+			this->deletePost_button->UseVisualStyleBackColor = true;
 			// 
-			// button6
+			// log_button
 			// 
-			this->button6->Location = System::Drawing::Point(630, 395);
-			this->button6->Name = L"button6";
-			this->button6->Size = System::Drawing::Size(75, 23);
-			this->button6->TabIndex = 7;
-			this->button6->Text = L"Login";
-			this->button6->UseVisualStyleBackColor = true;
-			this->button6->Click += gcnew System::EventHandler(this, &MyForm::button6_Click);
+			this->log_button->Location = System::Drawing::Point(686, 13);
+			this->log_button->Name = L"log_button";
+			this->log_button->Size = System::Drawing::Size(75, 23);
+			this->log_button->TabIndex = 7;
+			this->log_button->Text = L"Login";
+			this->log_button->UseVisualStyleBackColor = true;
+			this->log_button->Click += gcnew System::EventHandler(this, &MyForm::log_button_Click);
 			// 
 			// dateLabel
 			// 
@@ -231,9 +239,9 @@ namespace Client {
 			this->Controls->Add(this->userNameLabel);
 			this->Controls->Add(this->textBox1);
 			this->Controls->Add(this->dateLabel);
-			this->Controls->Add(this->button6);
-			this->Controls->Add(this->button5);
-			this->Controls->Add(this->button4);
+			this->Controls->Add(this->log_button);
+			this->Controls->Add(this->deletePost_button);
+			this->Controls->Add(this->editPost_button);
 			this->Controls->Add(this->newPost_button);
 			this->Controls->Add(this->prevButton);
 			this->Controls->Add(this->nextButton);
@@ -247,9 +255,20 @@ namespace Client {
 
 		}
 #pragma endregion
-	private: System::Void button6_Click(System::Object^ sender, System::EventArgs^ e) {
-		LoginPage lp;
+	private: System::Void log_button_Click(System::Object^ sender, System::EventArgs^ e) {
+		LoginPage lp(ClientSocket, userName);
 		lp.ShowDialog();
+
+		System::String^ sysUser = msclr::interop::marshal_as<System::String^>(*userName);
+		userNameLabel->Text = sysUser;
+		userNameLabel->Visible = true;
+
+		newPost_button->Visible = true;
+		editPost_button->Visible = true;
+		deletePost_button->Visible = true;
+		log_button->Text = "Log out";
+
+		receiveAllPosts();
 	}
 
 	private: System::Void newPost_button_Click(System::Object^ sender, System::EventArgs^ e) {
@@ -258,7 +277,7 @@ namespace Client {
 		NewPost np(newPost);
 		np.ShowDialog();
 
-		newPost->setName("User");
+		newPost->setName(*userName);
 
 		writePostToFile(newPost);
 
@@ -270,10 +289,10 @@ namespace Client {
 		prevButton->Visible = false;
 		nextButtonClicks = 0;
 
-		char* buffer;
+		char* buffer;		// For reading in from image file
 		ifstream ifs;
 		ifs.open(newPost->getFilePath(), ios::binary);
-		char* TxBuffer;
+		char* TxBuffer;		// For transmitting entire packet to server
 		bool firstPacket = true;
 
 		ofstream ofs;
@@ -301,7 +320,7 @@ namespace Client {
 				int size = 0;
 				TxBuffer = newPacket.SerializeData(size, dataSize);
 
-				writePacketRawDataToFile(TxBuffer, size);
+				writePacketRawDataToFile(TxBuffer, size, "Sent");
 
 				PktDef* recPkt = new PktDef(TxBuffer);
 				Post* testPost = new Post();
@@ -418,6 +437,113 @@ namespace Client {
 
 		if (nextButtonClicks < (posts->size() - 1))
 			nextButton->Visible = true;
+	}
+
+
+	void receiveAllPosts()
+	{
+
+		bool moreData = true;
+		int numImagesReceived = 0;
+
+		char RxBuffer[1024];
+		Post* loadPost = new Post();
+
+		do
+		{
+			bool firstPacket = true;
+			recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+			PktDef recPacket(RxBuffer);
+			writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
+
+			if (recPacket.getMessageType() == 0)
+			{
+				moreData = false;
+				break;
+			}
+			else
+				numImagesReceived++;
+
+			ostringstream os;
+			os << numImagesReceived << ".jpeg";
+			ofstream ofs;
+
+			ofs.open(os.str());
+			if (ofs.is_open())
+			{
+				while (recPacket.getPostFinishFlag() != true)
+				{
+					char* imageStartingPoint;
+					if (!firstPacket)
+					{
+						recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+						PktDef newPacket(RxBuffer);
+						writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
+
+						if (newPacket.getPostFinishFlag() == true)
+							break;
+
+						imageStartingPoint = newPacket.parseData(loadPost);
+
+						int imageDataSize = MAX_PACKET_SIZE - newPacket.getHeaderSize() - loadPost->getPostSize();
+
+						ofs.write(imageStartingPoint, imageDataSize);
+
+						if (newPacket.getFirstPacket() == true)
+						{
+							Post tempPost = *loadPost;
+							posts->push_back(tempPost);
+						}
+					}
+					else
+					{
+						imageStartingPoint = recPacket.parseData(loadPost);
+
+						int imageDataSize = MAX_PACKET_SIZE - recPacket.getHeaderSize() - loadPost->getPostSize();
+
+						ofs.write(imageStartingPoint, imageDataSize);
+
+						if (recPacket.getFirstPacket() == true)
+						{
+							Post tempPost = *loadPost;
+							posts->push_back(tempPost);
+						}
+						firstPacket = false;
+					}
+
+					sendAckPacket();
+				}
+			}
+			ofs.close();
+
+			sendAckPacket();
+
+		} while (moreData);
+
+		sendAckPacket();
+	}
+
+	void sendAckPacket()
+	{
+		char* TxBuffer;
+
+		Post* ackPost = new Post();
+		PktDef ackPkt;
+		ackPkt.setMessageType(4);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = ackPkt.setData(ackPost, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = ackPkt.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ClientSocket, TxBuffer, size, 0);
+
+		delete ackPost;
 	}
 };
 }

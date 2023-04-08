@@ -1,31 +1,52 @@
-#include <iostream>
-#include <windows.networking.sockets.h>
-#include <string>
-#include <fstream>
-#include "PktDef.h"
-using namespace std;
+#include "UserLogin.h"
+#include "LogToFile.h"
+#include "User.h"
 
+SOCKET createSocket();
+SOCKET listenForConnection(SOCKET ServerSocket);
 
-int initServer()
+int main()
+{
+	SOCKET ServerSocket = createSocket();
+	if (ServerSocket < 0)
+		return 1;
+
+	SOCKET ConnectionSocket = listenForConnection(ServerSocket);
+	if (ConnectionSocket < 0)
+		return 1;
+
+	string userName = beginUserLogin(ConnectionSocket);
+
+	User newUser;
+	newUser.setUserName(userName);
+	newUser.loadPosts();
+	newUser.sendAllPosts(ConnectionSocket);
+	
+	closesocket(ConnectionSocket);	//closes incoming socket
+	closesocket(ServerSocket);	    //closes server socket	
+	WSACleanup();					//frees Winsock resources
+	return 0;
+}
+
+SOCKET createSocket()
 {
 	//starts Winsock DLLs		
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		return 0;
+	{
+		std::cout << "Failed to initialize Winsock library" << std::endl;
+		return -1;
+	}
 
 	//create server socket
 	SOCKET ServerSocket;
 	ServerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (ServerSocket == INVALID_SOCKET) {
+	if (ServerSocket == INVALID_SOCKET)
+	{
+		std::cout << "Failed to create socket" << std::endl;
 		WSACleanup();
-		return 0;
+		return -1;
 	}
-
-	return ServerSocket;
-}
-
-void connectToServer(SOCKET ServerSocket)
-{
 
 	//binds socket to address
 	sockaddr_in SvrAddr;
@@ -34,23 +55,40 @@ void connectToServer(SOCKET ServerSocket)
 	SvrAddr.sin_port = htons(27000);
 	if (bind(ServerSocket, (struct sockaddr*)&SvrAddr, sizeof(SvrAddr)) == SOCKET_ERROR)
 	{
+		std::cout << "Failed to bind socket to port " << 27000 << std::endl;
 		closesocket(ServerSocket);
 		WSACleanup();
-		return;
+		return -1;
 	}
 
-	//listen on a socket
-	if (listen(ServerSocket, 1) == SOCKET_ERROR) {
-		closesocket(ServerSocket);
-		WSACleanup();
-		return;
-	}
+	return ServerSocket;
 }
 
-void runServer()
+SOCKET listenForConnection(SOCKET ServerSocket)
 {
-	SOCKET ServerSocket = initServer();
-	connectToServer(ServerSocket);
+	//listen on a socket
+	if (listen(ServerSocket, 1) == SOCKET_ERROR) {
+		std::cout << "Failed to listen for incoming connections" << std::endl;
+		closesocket(ServerSocket);
+		WSACleanup();
+		return -1;
+	}
+
+	std::cout << "Waiting for client connection\n" << std::endl;
+
+	//accepts a connection from a client
+	SOCKET ConnectionSocket;
+	ConnectionSocket = SOCKET_ERROR;
+	if ((ConnectionSocket = accept(ServerSocket, NULL, NULL)) == SOCKET_ERROR) {
+		std::cout << "Failed to accept incoming connection" << std::endl;
+		closesocket(ServerSocket);
+		WSACleanup();
+		return -1;
+	}
+
+	std::cout << "Connected to client" << endl << endl;
+
+	return ConnectionSocket;
 }
 
 

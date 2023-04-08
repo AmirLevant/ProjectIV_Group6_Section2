@@ -1,7 +1,9 @@
 #pragma once
 #include "Client.h"
+#include "LogToFile.h"
+#include <msclr/marshal_cppstd.h>
 
-#define MAX_SIZE 100
+#define MAX_PACKET_SIZE 1024
 
 namespace Client {
 
@@ -18,19 +20,27 @@ namespace Client {
 	public ref class LoginPage : public System::Windows::Forms::Form
 	{
 	private:
+		string* returnUserName;
 		String^ userName;
 	private: System::Windows::Forms::Button^ login_button;
 		   String^ password;
-	private: System::Windows::Forms::Label^ label3;
+	private: System::Windows::Forms::Label^ loginStatusLabel;
+
 		   SOCKET ClientSocket;
 
 	public:
 		LoginPage(void)
 		{
 			InitializeComponent();
-			label3->Visible = false;
-			ClientSocket = InitClient();
-			ConnectToServer(ClientSocket);
+			loginStatusLabel->Visible = false;
+		}
+
+		LoginPage(SOCKET ClientSocket, string* returnUserName)
+		{
+			InitializeComponent();
+			loginStatusLabel->Visible = false;
+			this->ClientSocket = ClientSocket;
+			this->returnUserName = returnUserName;
 		}
 
 	protected:
@@ -68,7 +78,7 @@ namespace Client {
 			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->password_Box = (gcnew System::Windows::Forms::TextBox());
 			this->login_button = (gcnew System::Windows::Forms::Button());
-			this->label3 = (gcnew System::Windows::Forms::Label());
+			this->loginStatusLabel = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// label1
@@ -115,21 +125,21 @@ namespace Client {
 			this->login_button->UseVisualStyleBackColor = true;
 			this->login_button->Click += gcnew System::EventHandler(this, &LoginPage::login_button_Click);
 			// 
-			// label3
+			// loginStatusLabel
 			// 
-			this->label3->AutoSize = true;
-			this->label3->Location = System::Drawing::Point(31, 272);
-			this->label3->Name = L"label3";
-			this->label3->Size = System::Drawing::Size(35, 13);
-			this->label3->TabIndex = 5;
-			this->label3->Text = L"label3";
+			this->loginStatusLabel->AutoSize = true;
+			this->loginStatusLabel->Location = System::Drawing::Point(31, 272);
+			this->loginStatusLabel->Name = L"loginStatusLabel";
+			this->loginStatusLabel->Size = System::Drawing::Size(35, 13);
+			this->loginStatusLabel->TabIndex = 5;
+			this->loginStatusLabel->Text = L"label3";
 			// 
 			// LoginPage
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(224, 304);
-			this->Controls->Add(this->label3);
+			this->Controls->Add(this->loginStatusLabel);
 			this->Controls->Add(this->login_button);
 			this->Controls->Add(this->password_Box);
 			this->Controls->Add(this->label2);
@@ -153,6 +163,8 @@ namespace Client {
 
 	private: System::Void login_button_Click(System::Object^ sender, System::EventArgs^ e) {
 
+		bool userLoggedIn = false;
+
 		std::string userString;			// Convert from String^ to string
 		for (int i = 0; i < userName->Length; i++) {
 			userString.push_back((char)userName[i]);
@@ -163,26 +175,75 @@ namespace Client {
 			passwordString.push_back((char)password[i]);
 		}
 
-		char buffer[MAX_SIZE] = "";
+		sendUserLogin(userString, passwordString);
 
-		send(ClientSocket, userString.c_str(), userString.length() + 1, 0);
-		
-		Sleep(50);
+		userLoggedIn = receiveUserLogin();
 
-		send(ClientSocket, passwordString.c_str(), passwordString.length() + 1, 0);
+		Post* ackPost = new Post();
+		PktDef ackPkt;
+		ackPkt.setMessageType(4);
 
-		recv(ClientSocket, buffer, sizeof(buffer), 0);
+		char* TxBuffer;
 
-		if (strcmp(buffer, "User Found") == 0)
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = ackPkt.setData(ackPost, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = ackPkt.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ClientSocket, TxBuffer, size, 0);
+
+		delete ackPost;
+
+		if (userLoggedIn)
+		{
+			*returnUserName = userString;
 			this->Close();
+		}
 		else
 		{
-			label3->Text = "Invalid Credentials, please try again";
-			label3->Visible = true;
+			System::String^ loginState = msclr::interop::marshal_as<System::String^>("Username or password incorrect");
+			loginStatusLabel->Text = loginState;
+			loginStatusLabel->Visible = true;
 		}
-
-		closesocket(ClientSocket);	    //closes server socket	
-		WSACleanup();
 	}
+
+		   void sendUserLogin(string userString, string passwordString)
+		   {
+			   Post* loginData = new Post();
+			   PktDef newPacket;
+
+			   loginData->setName(userString);
+			   loginData->setCaption(passwordString);
+			   newPacket.setMessageType(1);
+
+			   char* TxBuffer;
+
+			   char garbageData = { '\0' };
+			   char* garbagePtr = &garbageData;
+			   int dataSize = newPacket.setData(loginData, garbagePtr, 1);
+
+			   int size = 0;
+			   TxBuffer = newPacket.SerializeData(size, dataSize);
+			   writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+			   send(ClientSocket, TxBuffer, size, 0);
+			   if (loginData)
+				   delete loginData;
+		   }
+
+		   bool receiveUserLogin()
+		   {
+			   char RxBuffer[1024];
+			   recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+			   PktDef newPacket(RxBuffer);
+
+			   bool status = newPacket.getPostFinishFlag();
+
+			   return status;
+		   }
 };
 }

@@ -3,4 +3,4 @@
 #include <fstream>
 
 void writePostToFile(Post* post);
-void writePacketRawDataToFile(char* buffer, int size);
+void writePacketRawDataToFile(char* buffer, int size, string status);
