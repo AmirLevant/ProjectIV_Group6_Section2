@@ -197,7 +197,7 @@ namespace Client {
 			// dateLabel
 			// 
 			this->dateLabel->AutoSize = true;
-			this->dateLabel->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
+			this->dateLabel->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 11.5F));
 			this->dateLabel->Location = System::Drawing::Point(58, 104);
 			this->dateLabel->Name = L"dateLabel";
 			this->dateLabel->Size = System::Drawing::Size(51, 20);
@@ -269,6 +269,10 @@ namespace Client {
 		log_button->Text = "Log out";
 
 		receiveAllPosts();
+
+		setPageData((*posts)[posts->size() - 1]);
+		if (posts->size() > 1)
+			nextButton->Visible = true;
 	}
 
 	private: System::Void newPost_button_Click(System::Object^ sender, System::EventArgs^ e) {
@@ -457,7 +461,7 @@ namespace Client {
 			PktDef recPacket(RxBuffer);
 			writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
 
-			if (recPacket.getMessageType() == 0)
+			if (recPacket.getMessageType() == 8)
 			{
 				moreData = false;
 				break;
@@ -493,6 +497,7 @@ namespace Client {
 						if (newPacket.getFirstPacket() == true)
 						{
 							Post tempPost = *loadPost;
+							tempPost.setFilePath(os.str());
 							posts->push_back(tempPost);
 						}
 					}
@@ -507,6 +512,7 @@ namespace Client {
 						if (recPacket.getFirstPacket() == true)
 						{
 							Post tempPost = *loadPost;
+							tempPost.setFilePath(os.str());
 							posts->push_back(tempPost);
 						}
 						firstPacket = false;

@@ -90,7 +90,7 @@ public:
 	{
 		char* TxBuffer;
 		char RxBuffer[1024];
-		Post* postPtr = new Post();
+		Post* postPtr;
 		for (int i = 0; i < posts->size(); i++)
 		{
 			postPtr = &posts->at(i);
@@ -163,18 +163,16 @@ public:
 			if (newPacket.getMessageType() != 4)
 			{
 				delete postFinished;
-				delete postPtr;
 				exit(1);
 			}
 
-			delete postPtr;
 			delete postFinished;
 		}
 
 		Post* allFinished = new Post();
 		PktDef allSent;
 		allSent.setPostFinishFlag(true);
-		allSent.setMessageType(0);
+		allSent.setMessageType(8);
 
 		char garbageData = { '\0' };
 		char* garbagePtr = &garbageData;
@@ -196,6 +194,8 @@ public:
 			exit(1);
 		}
 
-		delete allFinished;
+		if (allFinished)
+			delete allFinished;
+	
 	}
 };
