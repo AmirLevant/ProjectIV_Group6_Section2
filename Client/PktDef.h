@@ -142,10 +142,10 @@ public:
 
 	void setImageLength(int length)
 	{
-		packet.Head.imageLength = (char)length;
+		packet.Head.imageLength = (short)length;
 	}
 
-	char getImageLength()
+	short getImageLength()
 	{
 		return packet.Head.imageLength;
 	}

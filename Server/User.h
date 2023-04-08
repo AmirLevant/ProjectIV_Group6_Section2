@@ -118,6 +118,7 @@ public:
 					buffer = new char[imageDataSize];
 
 					ifs.read(buffer, imageDataSize);
+					imageDataSize = ifs.gcount();
 
 					int dataSize = newPacket.setData(postPtr, buffer, imageDataSize);
 

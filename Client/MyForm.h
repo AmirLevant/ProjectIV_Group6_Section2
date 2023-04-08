@@ -466,10 +466,10 @@ namespace Client {
 				numImagesReceived++;
 
 			ostringstream os;
-			os << numImagesReceived << ".jpeg";
+			os << numImagesReceived << ".jpg";
 			ofstream ofs;
 
-			ofs.open(os.str());
+			ofs.open(os.str(), ios::binary);
 			if (ofs.is_open())
 			{
 				while (recPacket.getPostFinishFlag() != true)
@@ -487,8 +487,7 @@ namespace Client {
 
 						imageStartingPoint = newPacket.parseData(loadPost);
 
-						int imageDataSize = MAX_PACKET_SIZE - newPacket.getHeaderSize() - loadPost->getPostSize();
-
+						int imageDataSize = newPacket.getImageLength();
 						ofs.write(imageStartingPoint, imageDataSize);
 
 						if (newPacket.getFirstPacket() == true)
@@ -501,7 +500,7 @@ namespace Client {
 					{
 						imageStartingPoint = recPacket.parseData(loadPost);
 
-						int imageDataSize = MAX_PACKET_SIZE - recPacket.getHeaderSize() - loadPost->getPostSize();
+						int imageDataSize = recPacket.getImageLength();
 
 						ofs.write(imageStartingPoint, imageDataSize);
 
