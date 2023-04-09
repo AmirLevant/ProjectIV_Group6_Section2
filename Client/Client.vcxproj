@@ -122,16 +122,42 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="LoginPage.cpp" />
+    <ClCompile Include="LogToFile.cpp" />
     <ClCompile Include="MyForm.cpp" />
+    <ClCompile Include="NewPost.cpp" />
+    <ClCompile Include="SignUpPage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="LoginPage.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
+    <ClInclude Include="LogToFile.h" />
+    <ClInclude Include="NewPost.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
+    <ClInclude Include="Post.h" />
     <ClInclude Include="MyForm.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
+    <ClInclude Include="PktDef.h" />
+    <ClInclude Include="SignUpPage.h">
       <FileType>CppForm</FileType>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="LoginPage.resx">
+      <DependentUpon>LoginPage.h</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MyForm.resx">
       <DependentUpon>MyForm.h</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewPost.resx">
+      <DependentUpon>NewPost.h</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SignUpPage.resx">
+      <DependentUpon>SignUpPage.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
