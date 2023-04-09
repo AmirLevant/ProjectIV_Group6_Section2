@@ -126,6 +126,7 @@
     <ClCompile Include="LogToFile.cpp" />
     <ClCompile Include="MyForm.cpp" />
     <ClCompile Include="NewPost.cpp" />
+    <ClCompile Include="SignUpPage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client.h" />
@@ -141,6 +142,9 @@
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="PktDef.h" />
+    <ClInclude Include="SignUpPage.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="LoginPage.resx">
@@ -151,6 +155,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="NewPost.resx">
       <DependentUpon>NewPost.h</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SignUpPage.resx">
+      <DependentUpon>SignUpPage.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

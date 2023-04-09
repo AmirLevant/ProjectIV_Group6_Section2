@@ -331,7 +331,9 @@ public:
 		if (ofs.is_open())
 		{
 			ostringstream postString;
-			postString << endl << date << '$' << name << '$' << caption << '$' << post.getFilePath() << '$' << post.getLikeAmount();
+			if (posts->size() > 0)
+				postString << endl;
+			postString << date << '$' << name << '$' << caption << '$' << post.getFilePath() << '$' << post.getLikeAmount();
 
 			ofs << postString.str();
 		}

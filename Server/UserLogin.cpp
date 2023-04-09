@@ -1,5 +1,7 @@
 #include "UserLogin.h"
 #include "LogToFile.h"
+#include <sstream>
+#include <Windows.h>
 
 string beginUserLogin(SOCKET ConnectionSocket)
 {
@@ -55,16 +57,25 @@ string beginUserLogin(SOCKET ConnectionSocket)
 
 string loginUser(SOCKET ConnectionSocket, bool& userLoggedIn)
 {
+	string userName;
 	char RxBuffer[1024];
 	recv(ConnectionSocket, RxBuffer, sizeof(RxBuffer), 0);
 
 	PktDef newPacket(RxBuffer);
 
+	if (newPacket.getMessageType() == 3)
+	{
+		userName = signUpUser(ConnectionSocket, RxBuffer);
+		userLoggedIn = true;
+
+		return userName;
+	}
+
 	Post* loginData = new Post();
 
 	newPacket.parseData(loginData);
 
-	string userName = loginData->getName();
+	userName = loginData->getName();
 	string password = loginData->getCaption();
 
     cout << "User Name: " << userName << endl;
@@ -105,4 +116,86 @@ bool checkForUser(string userName, string password)
     }
     file.close();
     return false;
+}
+
+string signUpUser(SOCKET ConnectionSocket, char* RxBuffer)
+{
+	PktDef newPacket(RxBuffer);
+	Post* loginData = new Post();
+
+	newPacket.parseData(loginData);
+
+	string name = loginData->getName();
+	string password = loginData->getCaption();
+
+	cout << "User Name: " << name << endl;
+	cout << "Password: " << password << endl << endl;
+
+	createUser(name, password);
+
+	if (loginData)
+		delete loginData;
+
+	return name;
+}
+
+void createUser(string userName, string password)
+{
+	ofstream ofs;
+	ofs.open("Users.txt", ios::app);
+
+	ostringstream os;
+	removeTerminatingChar(userName);
+	removeTerminatingChar(password);
+	os << endl << userName << ',' << password;
+	addTerminatingChar(userName);
+	addTerminatingChar(password);
+
+	if (ofs.is_open())
+	{
+		ofs << os.str();
+	}
+
+	ofs.close();
+
+	std::wstring wFolderName(userName.begin(), userName.end());
+
+	BOOL success = CreateDirectory(wFolderName.c_str(), NULL);
+	if (success) {
+		std::cout << "Folder created successfully." << std::endl;
+	}
+	else {
+		std::cout << "Folder creation failed" << std::endl;
+	}
+
+	removeTerminatingChar(userName);
+
+	ostringstream posts;
+	posts << userName << "/posts.txt";
+
+	ofstream outFile;
+
+	outFile.open(posts.str());
+	if (outFile.is_open())
+	{
+		cout << "posts.txt file created";
+	}
+	else 
+	{
+		std::cout << "posts.txt file creation failed" << std::endl;
+	}
+
+	outFile.close();
+}
+
+void removeTerminatingChar(std::string& str) {
+	if (str.back() == '\0') {
+		str.pop_back();
+	}
+}
+
+void addTerminatingChar(std::string& str) {
+	if (str.back() != '\0') {
+		str.push_back('\0');
+	}
 }

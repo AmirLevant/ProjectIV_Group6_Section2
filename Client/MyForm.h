@@ -1,5 +1,6 @@
 #pragma once
 #include "LoginPage.h"
+#include "SignUpPage.h"
 #include "NewPost.h"
 #include <map>
 
@@ -30,6 +31,7 @@ namespace Client {
 	private: int nextButtonClicks;
 	private: System::Windows::Forms::Button^ logOut_button;
 	private: string* userName;
+	private: System::Windows::Forms::Button^ signUp_button;
 	private: Bitmap^ image;
 	    
 	public:
@@ -147,6 +149,7 @@ namespace Client {
 			this->userNameLabel = (gcnew System::Windows::Forms::Label());
 			this->likeLabel = (gcnew System::Windows::Forms::Label());
 			this->logOut_button = (gcnew System::Windows::Forms::Button());
+			this->signUp_button = (gcnew System::Windows::Forms::Button());
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox1))->BeginInit();
 			this->SuspendLayout();
 			// 
@@ -266,11 +269,22 @@ namespace Client {
 			this->logOut_button->UseVisualStyleBackColor = true;
 			this->logOut_button->Click += gcnew System::EventHandler(this, &MyForm::logOut_Click);
 			// 
+			// signUp_button
+			// 
+			this->signUp_button->Location = System::Drawing::Point(605, 13);
+			this->signUp_button->Name = L"signUp_button";
+			this->signUp_button->Size = System::Drawing::Size(75, 23);
+			this->signUp_button->TabIndex = 13;
+			this->signUp_button->Text = L"Sign Up";
+			this->signUp_button->UseVisualStyleBackColor = true;
+			this->signUp_button->Click += gcnew System::EventHandler(this, &MyForm::signUp_Click);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(784, 450);
+			this->Controls->Add(this->signUp_button);
 			this->Controls->Add(this->logOut_button);
 			this->Controls->Add(this->likeLabel);
 			this->Controls->Add(this->userNameLabel);
@@ -302,6 +316,7 @@ namespace Client {
 		newPost_button->Visible = true;
 		deletePost_button->Visible = true;
 		logOut_button->Visible = true;
+		signUp_button->Visible = false;
 
 		receiveAllPosts();
 
@@ -680,13 +695,30 @@ namespace Client {
 		if (posts->size() > 0)
 		{
 			setPageData((*posts)[posts->size() - 1]);
-			nextButton->Visible = true;
+			if (posts->size() > 1)
+				nextButton->Visible = true;
 		}
 
 		prevButton->Visible = false;
 		nextButtonClicks = 0;
 
 		delete postToDelete;
+	}
+
+	private: System::Void signUp_Click(System::Object^ sender, System::EventArgs^ e) {
+		SignUpPage sp(ClientSocket, userName);
+		sp.ShowDialog();
+
+		System::String^ sysUser = msclr::interop::marshal_as<System::String^>(*userName);
+		userNameLabel->Text = sysUser;
+		userNameLabel->Visible = true;
+
+		newPost_button->Visible = true;
+		deletePost_button->Visible = true;
+		logOut_button->Visible = true;
+		signUp_button->Visible = false;
+
+
 	}
 };
 }
