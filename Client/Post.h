@@ -36,6 +36,14 @@ class Post
 			imageFilePath = filePath;
 		}
 
+		/*Post(const Post& post) {
+			this->postCaption = post.postCaption;
+			this->postUserName = post.postUserName;
+			this->postCaption = post.postCaption;
+			this->postLikeAmount = post.postLikeAmount;
+			this->imageFilePath = post.imageFilePath;
+		}*/
+
 		void setCaption(string newCaption) // Post Caption
 		{
 			postCaption = newCaption;

@@ -46,7 +46,6 @@ namespace Client {
 			nextButtonClicks = 0;
 			textBox1->ReadOnly = true;
 			newPost_button->Visible = false;
-			editPost_button->Visible = false;
 			deletePost_button->Visible = false;
 			logOut_button->Visible = false;
 
@@ -70,7 +69,6 @@ namespace Client {
 			nextButtonClicks = 0;
 			textBox1->ReadOnly = true;
 			newPost_button->Visible = false;
-			editPost_button->Visible = false;
 			deletePost_button->Visible = false;
 			logOut_button->Visible = false;
 
@@ -116,7 +114,7 @@ namespace Client {
 	private: System::Windows::Forms::Button^ prevButton;
 
 	private: System::Windows::Forms::Button^ newPost_button;
-	private: System::Windows::Forms::Button^ editPost_button;
+
 	private: System::Windows::Forms::Button^ deletePost_button;
 	private: System::Windows::Forms::Button^ log_button;
 
@@ -142,7 +140,6 @@ namespace Client {
 			this->nextButton = (gcnew System::Windows::Forms::Button());
 			this->prevButton = (gcnew System::Windows::Forms::Button());
 			this->newPost_button = (gcnew System::Windows::Forms::Button());
-			this->editPost_button = (gcnew System::Windows::Forms::Button());
 			this->deletePost_button = (gcnew System::Windows::Forms::Button());
 			this->log_button = (gcnew System::Windows::Forms::Button());
 			this->dateLabel = (gcnew System::Windows::Forms::Label());
@@ -203,23 +200,15 @@ namespace Client {
 			this->newPost_button->UseVisualStyleBackColor = true;
 			this->newPost_button->Click += gcnew System::EventHandler(this, &MyForm::newPost_button_Click);
 			// 
-			// editPost_button
-			// 
-			this->editPost_button->Location = System::Drawing::Point(572, 164);
-			this->editPost_button->Name = L"editPost_button";
-			this->editPost_button->Size = System::Drawing::Size(75, 23);
-			this->editPost_button->TabIndex = 5;
-			this->editPost_button->Text = L"edit post";
-			this->editPost_button->UseVisualStyleBackColor = true;
-			// 
 			// deletePost_button
 			// 
-			this->deletePost_button->Location = System::Drawing::Point(572, 210);
+			this->deletePost_button->Location = System::Drawing::Point(572, 157);
 			this->deletePost_button->Name = L"deletePost_button";
 			this->deletePost_button->Size = System::Drawing::Size(75, 23);
 			this->deletePost_button->TabIndex = 6;
 			this->deletePost_button->Text = L"delete post";
 			this->deletePost_button->UseVisualStyleBackColor = true;
+			this->deletePost_button->Click += gcnew System::EventHandler(this, &MyForm::deletePost_button_Click);
 			// 
 			// log_button
 			// 
@@ -289,7 +278,6 @@ namespace Client {
 			this->Controls->Add(this->dateLabel);
 			this->Controls->Add(this->log_button);
 			this->Controls->Add(this->deletePost_button);
-			this->Controls->Add(this->editPost_button);
 			this->Controls->Add(this->newPost_button);
 			this->Controls->Add(this->prevButton);
 			this->Controls->Add(this->nextButton);
@@ -312,7 +300,6 @@ namespace Client {
 		userNameLabel->Visible = true;
 
 		newPost_button->Visible = true;
-		editPost_button->Visible = true;
 		deletePost_button->Visible = true;
 		logOut_button->Visible = true;
 
@@ -637,6 +624,8 @@ namespace Client {
 
 		char garbageData = { '\0' };
 		char* garbagePtr = &garbageData;
+
+		bool dataSendBack = true;
 		int dataSize = logOutPacket.setData(logOut, garbagePtr, 1);
 
 		int size = 0;
@@ -655,6 +644,49 @@ namespace Client {
 		delete logOut;
 
 		this->Close();
+	}
+
+	private: System::Void deletePost_button_Click(System::Object^ sender, System::EventArgs^ e) {
+
+		char* TxBuffer;
+		char RxBuffer[1024];
+
+		Post* postToDelete = new Post();
+
+		*postToDelete = (*posts)[posts->size() - 1 - nextButtonClicks];
+
+		PktDef deletePacket;
+		deletePacket.setMessageType(5);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = deletePacket.setData(postToDelete, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = deletePacket.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ClientSocket, TxBuffer, size, 0);
+
+		recv(ClientSocket, RxBuffer, sizeof(RxBuffer), 0);
+
+		PktDef recPacket(RxBuffer);
+
+		if (recPacket.getMessageType() != 4)
+			exit(1);
+
+		posts->erase(posts->begin() + (posts->size() - 1 - nextButtonClicks));
+
+		if (posts->size() > 0)
+		{
+			setPageData((*posts)[posts->size() - 1]);
+			nextButton->Visible = true;
+		}
+
+		prevButton->Visible = false;
+		nextButtonClicks = 0;
+
+		delete postToDelete;
 	}
 };
 }

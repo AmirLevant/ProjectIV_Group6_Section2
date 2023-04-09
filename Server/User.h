@@ -206,10 +206,22 @@ public:
 		Post* newPost = new Post();
 		PktDef recPacket(RxBuffer);
 		writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
-
-		ostringstream os;
+		
 		removeTerminatingChar(userName);
-		os << userName << '/' << (posts->size() + 1) << ".jpg";
+		ostringstream os;
+
+		for (int i = 1; i <= MAX_PACKET_SIZE; i++)
+		{
+			os << userName << '/' << i << ".jpg";
+			ifstream ifs;
+			ifs.open(os.str());
+
+			if (ifs.is_open() != true)
+			{
+				break;
+			}
+			os.str("");
+		}
 		addTerminatingChar(userName);
 		ofstream ofs;
 
@@ -325,6 +337,147 @@ public:
 		}
 
 		ofs.close();
+	}
+
+	void deletePost(SOCKET ConnectionSocket, char* RxBuffer)
+	{
+		char* TxBuffer;
+		Post* deletePost = new Post();
+		PktDef recPacket(RxBuffer);
+		writePacketRawDataToFile(RxBuffer, MAX_PACKET_SIZE, "Received");
+
+		recPacket.parseData(deletePost);
+
+		removeTerminatingChar(userName);
+		ostringstream os;
+		os << userName << "/posts.txt";
+		ifstream file(os.str());
+		string line;
+		int lineNumber = 0;
+		addTerminatingChar(userName);
+		
+		string date = deletePost->getDate();
+		removeTerminatingChar(date);
+		removeTerminatingChar(date);
+
+		string name = deletePost->getName();
+		removeTerminatingChar(name);
+		removeTerminatingChar(name);
+
+		string caption = deletePost->getCaption();
+		removeTerminatingChar(caption);
+		removeTerminatingChar(caption);
+
+		if (file.is_open()) {
+			while (getline(file, line)) {
+				++lineNumber;
+				istringstream ss(line);
+				string field;
+				bool allFieldsMatch = true;
+
+
+				getline(ss, field, '$'); // postDate
+				if (field.find(date) == string::npos) 
+				{
+					allFieldsMatch = false;
+				}
+
+				getline(ss, field, '$'); // postUserName
+				if (field != name)
+				{
+					allFieldsMatch = false;
+				}
+
+				getline(ss, field, '$'); // postCaption
+				if (field != caption)
+				{
+					allFieldsMatch = false;
+				}
+
+				getline(ss, field, '$'); // imageFilePath
+
+				getline(ss, field, '$'); // postLikeAmount
+
+				if (allFieldsMatch) 
+				{
+					string filePath = removeLineFromFile(os.str(), lineNumber);
+					removePictureFromFile(lineNumber, filePath);
+					posts->erase(posts->begin() + (lineNumber - 1));
+				}
+			}
+			file.close();
+		}
+		else {
+			cout << "Unable to open file" << endl;
+		}
+		delete deletePost;
+
+
+		Post* ackPost = new Post();
+		PktDef ackPkt;
+		ackPkt.setMessageType(4);
+
+		char garbageData = { '\0' };
+		char* garbagePtr = &garbageData;
+		int dataSize = ackPkt.setData(ackPost, garbagePtr, 1);
+
+		int size = 0;
+		TxBuffer = ackPkt.SerializeData(size, dataSize);
+		writePacketRawDataToFile(TxBuffer, size, "Sent");
+
+		send(ConnectionSocket, TxBuffer, size, 0);
+
+		delete ackPost;
+	}
+
+	string removeLineFromFile(string filename, int lineNum) {
+		// Open the file
+		ifstream inFile(filename);
+
+		// Read the file into a vector of strings
+		vector<string> lines;
+		string line;
+		while (getline(inFile, line)) {
+			lines.push_back(line);
+		}
+
+		string specificLine = lines.at(lineNum - 1);
+
+		lines.erase(lines.begin() + (lineNum - 1));
+
+		string delimiter = "$";
+		size_t pos = 0;
+		string token;
+		int field_num = 0;
+		while ((pos = specificLine.find(delimiter)) != string::npos) {
+			token = specificLine.substr(0, pos);
+			if (field_num == 3) {  // fourth field contains the image filepath
+				cout << token << endl;  // do something with the filepath
+				break;
+			}
+			specificLine.erase(0, pos + delimiter.length());
+			field_num++;
+		}
+
+		inFile.close();
+
+		// Write the updated data back to the file
+		ofstream outFile(filename);
+	
+		for (int i = 0; i < lines.size(); i ++) {
+			outFile << lines.at(i);
+			if (i != (lines.size() - 1))
+				outFile << endl;
+		}
+
+		outFile.close();
+
+		return token;
+	}
+
+	void removePictureFromFile(int lineNumber, string filePath)
+	{
+		int result = remove(filePath.c_str());
 	}
 };
 

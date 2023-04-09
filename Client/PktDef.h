@@ -172,7 +172,6 @@ public:
 
 	int setData(Post* post, char* imageData, int size)			// Where size is the length of image data being sent in the specific packet
 	{
-
 		int totalSize;
 
 		packet.Head.dateLength = (unsigned char)(post->getDate().length() + 1);

@@ -24,6 +24,12 @@ string serverSwitch(char* RxBuffer, SOCKET ConnectionSocket, User user)
 		user.receivePost(ConnectionSocket, RxBuffer);
 		break;
 	}
+	case 5:
+	{
+		cout << "Deleting post from server" << endl << endl;
+		user.deletePost(ConnectionSocket, RxBuffer);
+		break;
+	}
 	case 7:
 	{
 		cout << "Logging user out..." << endl << endl;
