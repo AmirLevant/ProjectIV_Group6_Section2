@@ -8,7 +8,7 @@ bool serverSwitch(char* RxBuffer, SOCKET ConnectionSocket, User user)
 	PktDef menuChoice(RxBuffer);
 	switch (menuChoice.getMessageType())
 	{
-	case 0: 
+	case 0:
 	{
 		cout << "Message Type not set" << endl << endl;
 		break;
@@ -23,6 +23,7 @@ bool serverSwitch(char* RxBuffer, SOCKET ConnectionSocket, User user)
 		cout << "Post incoming to server" << endl << endl;
 		user.receivePost(ConnectionSocket, RxBuffer);
 		break;
+
 	}
 	}
 	return logout;

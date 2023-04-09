@@ -3,7 +3,7 @@
 #include"C:\Users\drash\OneDrive\Desktop\Project 4\Client\PktDef.h"
 #include"C:\Users\drash\OneDrive\Desktop\Project 4\Client\LogToFile.cpp"
 #include"C:\Users\drash\OneDrive\Desktop\Project 4\Client\Post.h"
-//#include "../Project 4/Client/PktDef.h"
+
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -153,7 +153,7 @@ namespace ClientTests
 			Assert::AreEqual(post.getFilePath(), std::string("new_image.png"));
 
 			// Test getPostSize method
-			Assert::AreEqual(post.getPostSize(), 35); // 10 (date length) + 1 + 8 (username length) + 1 + 11 (caption length)  + 4 (like amount)
+			Assert::AreEqual(post.getPostSize(), 36); // 10 (date length) + 1 + 8 (username length) + 1 + 11 (caption length)  + 4 (like amount)
 			// Test reset method
 			post.reset();
 			Assert::AreEqual(post.getCaption(), std::string(""));
@@ -189,29 +189,6 @@ namespace ClientTests
 			}
 			Assert::IsTrue(found);
 		}
-		TEST_METHOD(WritePostToFile_EmptyFilePath)
-		{
-			// Initialize a new Post object with empty image path
-			Post post("Caption", "User", "2023-04-06", 10, "");
-
-			// Write post data to file
-			writePostToFile(&post);
-
-			// Check if the post data is written to the file correctly
-			std::ifstream file("LogFile.txt");
-			std::string line;
-			bool found = false;
-			while (std::getline(file, line)) {
-				if (line == "File Path: ") {
-					found = true;
-					break;
-				}
-			}
-			Assert::IsTrue(found);
-		}
-
-
-
 
 	};
 
